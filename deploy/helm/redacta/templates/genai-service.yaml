@@ -1,0 +1,63 @@
+{{- $anonymizationUrl := .Values.genaiService.anonymizationServiceUrl -}}
+{{- if not $anonymizationUrl -}}
+{{- $anonymizationUrl = printf "http://%s-anonymization-service:%d/api/v1/anonymization" (include "redacta.fullname" .) (int .Values.anonymizationService.service.port) -}}
+{{- end -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "redacta.fullname" . }}-genai-service
+  labels:
+    {{- include "redacta.labels" . | nindent 4 }}
+    app.kubernetes.io/component: genai-service
+spec:
+  replicas: {{ .Values.genaiService.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "redacta.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: genai-service
+  template:
+    metadata:
+      labels:
+        {{- include "redacta.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: genai-service
+    spec:
+      containers:
+        - name: genai-service
+          image: "{{ .Values.genaiService.image.repository }}:{{ .Values.genaiService.image.tag }}"
+          imagePullPolicy: {{ default .Values.global.imagePullPolicy .Values.genaiService.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.genaiService.service.port }}
+          env:
+            - name: ANONYMIZATION_SERVICE_URL
+              value: {{ $anonymizationUrl | quote }}
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.name }}
+                  key: openai-api-key
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "redacta.fullname" . }}-genai-service
+  labels:
+    {{- include "redacta.labels" . | nindent 4 }}
+    app.kubernetes.io/component: genai-service
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: {{ .Values.genaiService.service.port }}
+      targetPort: http
+  selector:
+    {{- include "redacta.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: genai-service

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: redacta
+description: Local Kubernetes chart for the Redacta application services
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "redacta.fullname" . }}-authentication-service
+  labels:
+    {{- include "redacta.labels" . | nindent 4 }}
+    app.kubernetes.io/component: authentication-service
+spec:
+  replicas: {{ .Values.authenticationService.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "redacta.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: authentication-service
+  template:
+    metadata:
+      labels:
+        {{- include "redacta.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: authentication-service
+    spec:
+      containers:
+        - name: authentication-service
+          image: "{{ .Values.authenticationService.image.repository }}:{{ .Values.authenticationService.image.tag }}"
+          imagePullPolicy: {{ default .Values.global.imagePullPolicy .Values.authenticationService.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.authenticationService.service.port }}
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: {{ .Values.spring.profile | quote }}
+            - name: SPRING_DATASOURCE_URL
+              value: {{ .Values.authenticationService.databaseUrl | quote }}
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.name }}
+                  key: datasource-username
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.name }}
+                  key: datasource-password
+            - name: KEYCLOAK_AUTH_SERVER_URL
+              value: {{ .Values.keycloak.authServerUrl | quote }}
+            - name: KEYCLOAK_REALM
+              value: {{ .Values.keycloak.realm | quote }}
+            - name: KEYCLOAK_CLIENT_ID
+              value: {{ .Values.keycloak.clientId | quote }}
+            - name: KEYCLOAK_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.name }}
+                  key: keycloak-client-secret
+            - name: KEYCLOAK_ADMIN_CLIENT_ID
+              value: {{ .Values.keycloak.adminClientId | quote }}
+            - name: KEYCLOAK_ADMIN_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.name }}
+                  key: keycloak-admin-username
+            - name: KEYCLOAK_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.name }}
+                  key: keycloak-admin-password
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "redacta.fullname" . }}-authentication-service
+  labels:
+    {{- include "redacta.labels" . | nindent 4 }}
+    app.kubernetes.io/component: authentication-service
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: {{ .Values.authenticationService.service.port }}
+      targetPort: http
+  selector:
+    {{- include "redacta.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: authentication-service

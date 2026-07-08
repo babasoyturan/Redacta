@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "redacta.fullname" . }}-document-service
+  labels:
+    {{- include "redacta.labels" . | nindent 4 }}
+    app.kubernetes.io/component: document-service
+spec:
+  replicas: {{ .Values.documentService.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "redacta.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: document-service
+  template:
+    metadata:
+      labels:
+        {{- include "redacta.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: document-service
+    spec:
+      containers:
+        - name: document-service
+          image: "{{ .Values.documentService.image.repository }}:{{ .Values.documentService.image.tag }}"
+          imagePullPolicy: {{ default .Values.global.imagePullPolicy .Values.documentService.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.documentService.service.port }}
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: {{ .Values.spring.profile | quote }}
+            - name: SPRING_DATASOURCE_URL
+              value: {{ .Values.documentService.databaseUrl | quote }}
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.name }}
+                  key: datasource-username
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.name }}
+                  key: datasource-password
+            - name: SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI
+              value: {{ .Values.documentService.jwtIssuerUri | quote }}
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "redacta.fullname" . }}-document-service
+  labels:
+    {{- include "redacta.labels" . | nindent 4 }}
+    app.kubernetes.io/component: document-service
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: {{ .Values.documentService.service.port }}
+      targetPort: http
+  selector:
+    {{- include "redacta.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: document-service

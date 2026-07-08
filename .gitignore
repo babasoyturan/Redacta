@@ -15,6 +15,9 @@ uploads/
 backups/
 local-backups/
 
+deploy/helm/**/values-local.yaml
+deploy/helm/**/values.local.yaml
+
 .idea/
 .vscode/
 .DS_Store

@@ -1,0 +1,79 @@
+global:
+  imagePullPolicy: IfNotPresent
+
+spring:
+  profile: dev
+
+frontend:
+  replicaCount: 1
+  image:
+    repository: redacta-frontend
+    tag: local
+    pullPolicy: ""
+  service:
+    port: 8080
+
+documentService:
+  replicaCount: 1
+  image:
+    repository: redacta-document-service
+    tag: local
+    pullPolicy: ""
+  service:
+    port: 8091
+  databaseUrl: jdbc:postgresql://postgres:5432/redacta_documents
+  jwtIssuerUri: http://keycloak:8080/realms/redacta
+
+authenticationService:
+  replicaCount: 1
+  image:
+    repository: redacta-authentication-service
+    tag: local
+    pullPolicy: ""
+  service:
+    port: 8092
+  databaseUrl: jdbc:postgresql://postgres:5432/redacta_authentication
+
+anonymizationService:
+  replicaCount: 1
+  image:
+    repository: redacta-anonymization-service
+    tag: local
+    pullPolicy: ""
+  service:
+    port: 8094
+  databaseUrl: jdbc:postgresql://postgres:5432/redacta_anonymization
+  jwtIssuerUri: http://keycloak:8080/realms/redacta
+
+genaiService:
+  replicaCount: 1
+  image:
+    repository: redacta-genai-service
+    tag: local
+    pullPolicy: ""
+  service:
+    port: 8000
+  anonymizationServiceUrl: ""
+
+keycloak:
+  authServerUrl: http://keycloak:8080
+  realm: redacta
+  clientId: redacta-client
+  adminClientId: admin-cli
+
+secrets:
+  create: false
+  name: redacta-app-secrets
+  values:
+    datasourceUsername: ""
+    datasourcePassword: ""
+    keycloakClientSecret: ""
+    keycloakAdminUsername: ""
+    keycloakAdminPassword: ""
+    openaiApiKey: ""
+
+ingress:
+  enabled: true
+  className: traefik
+  host: redacta.local
+  annotations: {}

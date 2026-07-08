@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "redacta.fullname" . }}-anonymization-service
+  labels:
+    {{- include "redacta.labels" . | nindent 4 }}
+    app.kubernetes.io/component: anonymization-service
+spec:
+  replicas: {{ .Values.anonymizationService.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "redacta.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: anonymization-service
+  template:
+    metadata:
+      labels:
+        {{- include "redacta.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: anonymization-service
+    spec:
+      containers:
+        - name: anonymization-service
+          image: "{{ .Values.anonymizationService.image.repository }}:{{ .Values.anonymizationService.image.tag }}"
+          imagePullPolicy: {{ default .Values.global.imagePullPolicy .Values.anonymizationService.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.anonymizationService.service.port }}
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: {{ .Values.spring.profile | quote }}
+            - name: SPRING_DATASOURCE_URL
+              value: {{ .Values.anonymizationService.databaseUrl | quote }}
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.name }}
+                  key: datasource-username
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.name }}
+                  key: datasource-password
+            - name: SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI
+              value: {{ .Values.anonymizationService.jwtIssuerUri | quote }}
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "redacta.fullname" . }}-anonymization-service
+  labels:
+    {{- include "redacta.labels" . | nindent 4 }}
+    app.kubernetes.io/component: anonymization-service
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: {{ .Values.anonymizationService.service.port }}
+      targetPort: http
+  selector:
+    {{- include "redacta.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: anonymization-service
