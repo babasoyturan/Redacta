@@ -55,6 +55,7 @@ genaiService:
   service:
     port: 8000
   anonymizationServiceUrl: ""
+  localFallback: false
 
 keycloak:
   authServerUrl: http://keycloak:8080

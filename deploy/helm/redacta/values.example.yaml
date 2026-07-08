@@ -10,3 +10,6 @@ secrets:
 
 documentService:
   storageLocation: /tmp/redacta-uploads
+
+genaiService:
+  localFallback: false

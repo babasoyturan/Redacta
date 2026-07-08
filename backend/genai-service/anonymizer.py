@@ -1,4 +1,6 @@
 from dotenv import load_dotenv
+import os
+import re
 from typing import Annotated, Literal, List
 from pydantic import BaseModel,RootModel
 from typing_extensions import TypedDict
@@ -23,10 +25,56 @@ class ChangedTermsResponse(BaseModel):
     changed_terms: List[ChangedTerm]
 
 
+def _uses_local_fallback() -> bool:
+    value = os.getenv("GENAI_LOCAL_FALLBACK", "").strip().lower()
+    api_key = os.getenv("OPENAI_API_KEY", "").strip()
+    return value in {"1", "true", "yes", "on"} or api_key in {"", "local-placeholder"}
+
+
+def _extract_terms_locally(text: str, level: str) -> list[ChangedTerm]:
+    terms: list[ChangedTerm] = []
+    seen: set[str] = set()
+    counters: dict[str, int] = {}
+
+    def add(original: str, label: str) -> None:
+        original = original.strip(" ,.;:()[]{}")
+        if len(original) < 3 or original in seen:
+            return
+        seen.add(original)
+        counters[label] = counters.get(label, 0) + 1
+        terms.append({"original": original, "anonymized": f"[{label.upper()}_{counters[label]}]"})
+
+    for match in re.finditer(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b", text):
+        add(match.group(0), "email")
+
+    for match in re.finditer(r"(?:\+?\d[\d\s().-]{7,}\d)", text):
+        add(match.group(0), "phone")
+
+    if level in {"medium", "high"}:
+        for match in re.finditer(r"\b(?:https?://)?(?:www\.)?(?:linkedin|github)\.com/[^\s,;]+", text, re.IGNORECASE):
+            add(match.group(0), "url")
+
+        for match in re.finditer(r"\b[A-Z][a-z]+(?:[_\s]+[A-Z][a-z]+){1,2}\b", text):
+            add(match.group(0), "person")
+
+        for match in re.finditer(r"\b(?:Baki|Baku|Azerbaycan|Azerbaijan)\b", text, re.IGNORECASE):
+            add(match.group(0), "location")
+
+    if level == "high":
+        for match in re.finditer(r"\b(?:19|20)\d{2}\b|\b\d{1,2}[./-]\d{1,2}[./-]\d{2,4}\b", text):
+            add(match.group(0), "date")
+
+    return terms
+
+
 def extract_terms(state: AnonymizerState):
-    structured_llm = llm.with_structured_output(ChangedTermsResponse)
     user_msg = state["messages"][-1]
     level = state["level"]
+
+    if _uses_local_fallback():
+        return {"changed_terms": _extract_terms_locally(user_msg.content, level)}
+
+    structured_llm = llm.with_structured_output(ChangedTermsResponse)
 
     level_prompt_map = {
         "light": "Extract a list of names to anonymize. Replace each with a generic label like 'Person A'.",

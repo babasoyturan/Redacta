@@ -31,6 +31,8 @@ spec:
           env:
             - name: ANONYMIZATION_SERVICE_URL
               value: {{ $anonymizationUrl | quote }}
+            - name: GENAI_LOCAL_FALLBACK
+              value: {{ .Values.genaiService.localFallback | quote }}
             - name: OPENAI_API_KEY
               valueFrom:
                 secretKeyRef:
