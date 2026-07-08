@@ -58,7 +58,15 @@ async def general_exception_handler(request, exc):
     )
 
 
-llm = init_chat_model("openai:gpt-4-0125-preview")
+OPENAI_MODEL = os.getenv("GENAI_OPENAI_MODEL", "gpt-4.1-mini")
+llm = None
+
+
+def get_chat_llm():
+    global llm
+    if llm is None:
+        llm = init_chat_model(f"openai:{OPENAI_MODEL}")
+    return llm
 ANONYMIZATION_SERVICE_URL = os.getenv("ANONYMIZATION_SERVICE_URL")
 
 
@@ -150,7 +158,7 @@ def chat(request: ChatRequest):
     for msg in request.messages:
         messages.append({"role": msg.role, "content": msg.content})
 
-    reply = llm.invoke(messages)
+    reply = get_chat_llm().invoke(messages)
     return ChatResponse(reply=reply.content)
 
 

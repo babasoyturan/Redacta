@@ -1,5 +1,6 @@
 from dotenv import load_dotenv
 from typing import Annotated, Literal
+import os
 from pydantic import BaseModel
 from typing_extensions import TypedDict
 from langgraph.graph import StateGraph, START, END
@@ -9,7 +10,15 @@ from local_fallback import summarize_text, uses_local_fallback
 
 load_dotenv()
 
-llm = init_chat_model("openai:gpt-4-0125-preview")
+OPENAI_MODEL = os.getenv("GENAI_OPENAI_MODEL", "gpt-4.1-mini")
+_llm = None
+
+
+def get_llm():
+    global _llm
+    if _llm is None:
+        _llm = init_chat_model(f"openai:{OPENAI_MODEL}")
+    return _llm
 
 class SummarizerState(TypedDict):
     messages: Annotated[list, add_messages]
@@ -36,7 +45,7 @@ def summarize(state: SummarizerState):
         {"role": "user", "content": user_msg.content}
     ]
 
-    reply = llm.invoke(messages)
+    reply = get_llm().invoke(messages)
     return {"summarized_text": reply.content}
 
 # Build graph with single node

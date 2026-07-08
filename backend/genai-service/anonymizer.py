@@ -1,4 +1,5 @@
 from dotenv import load_dotenv
+import os
 import re
 from typing import Annotated, Literal, List
 from pydantic import BaseModel,RootModel
@@ -10,7 +11,15 @@ from local_fallback import uses_local_fallback
 
 load_dotenv()
 
-llm = init_chat_model("openai:gpt-4.1-mini")
+OPENAI_MODEL = os.getenv("GENAI_OPENAI_MODEL", "gpt-4.1-mini")
+_llm = None
+
+
+def get_llm():
+    global _llm
+    if _llm is None:
+        _llm = init_chat_model(f"openai:{OPENAI_MODEL}")
+    return _llm
 
 class ChangedTerm(TypedDict):
     original: str
@@ -68,7 +77,7 @@ def extract_terms(state: AnonymizerState):
     if uses_local_fallback():
         return {"changed_terms": _extract_terms_locally(user_msg.content, level)}
 
-    structured_llm = llm.with_structured_output(ChangedTermsResponse)
+    structured_llm = get_llm().with_structured_output(ChangedTermsResponse)
 
     level_prompt_map = {
         "light": "Extract a list of names to anonymize. Replace each with a generic label like 'Person A'.",

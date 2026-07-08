@@ -12,6 +12,7 @@ from langchain_core.runnables import RunnablePassthrough
 from vector_store import VectorStoreManager
 from local_fallback import answer_chat, uses_local_fallback
 import json
+import os
 
 
 class ConversationState(TypedDict):
@@ -28,8 +29,9 @@ class ConversationManager:
         self.local_fallback = uses_local_fallback()
         self.llm = None
         if not self.local_fallback:
+            openai_model = os.getenv("GENAI_OPENAI_MODEL", "gpt-4.1-mini")
             self.llm = init_chat_model(
-                "openai:gpt-4-0125-preview", temperature=0.7
+                f"openai:{openai_model}", temperature=0.7
             )
         self.conversations: Dict[str, List[Dict]] = {}
 

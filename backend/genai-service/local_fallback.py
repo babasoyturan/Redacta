@@ -36,7 +36,8 @@ def answer_chat(query: str, document: str = "", context: str = "") -> str:
     if source:
         summary = summarize_text(source, "medium")
         return (
-            "Local fallback response: I can answer without the external AI key. "
+            "Local fallback response: I can help identify personal information "
+            "without the external AI key. "
             f"Relevant document context: {summary} "
             f"Your question was: {query}"
         )
