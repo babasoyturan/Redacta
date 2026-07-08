@@ -1,0 +1,9 @@
+secrets:
+  create: true
+  values:
+    datasourceUsername: "<postgres-username>"
+    datasourcePassword: "<postgres-password>"
+    keycloakClientSecret: "<keycloak-backend-client-secret>"
+    keycloakAdminUsername: "<keycloak-admin-username>"
+    keycloakAdminPassword: "<keycloak-admin-password>"
+    openaiApiKey: "<openai-api-key>"
