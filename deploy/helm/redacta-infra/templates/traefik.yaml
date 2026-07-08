@@ -127,6 +127,9 @@ spec:
     - name: web
       port: {{ .Values.traefik.service.port }}
       targetPort: web
+      {{- if and (eq .Values.traefik.service.type "NodePort") .Values.traefik.service.nodePort }}
+      nodePort: {{ .Values.traefik.service.nodePort }}
+      {{- end }}
   selector:
     app.kubernetes.io/instance: {{ .Release.Name }}
     app.kubernetes.io/component: traefik

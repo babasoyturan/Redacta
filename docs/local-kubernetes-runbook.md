@@ -21,6 +21,17 @@ The local Kubernetes environment runs the same application routing model planned
 
 Docker must be running before image build or Kubernetes deployment checks can work.
 
+## Create a kind Cluster
+
+For kind-based local testing, the repository includes `deploy/local/kind-config.yaml`.
+
+```powershell
+kind create cluster --config deploy/local/kind-config.yaml
+kubectl config use-context kind-redacta-local
+```
+
+This maps local host port `8080` to the kind node port `30080`.
+
 ## Build Local Images
 
 Run these commands from the repository root:
@@ -86,6 +97,8 @@ kubectl create namespace redacta
 helm upgrade --install redacta-infra deploy/helm/redacta-infra `
   --namespace redacta `
   -f deploy/helm/redacta-infra/values-local.yaml `
+  --set traefik.service.type=NodePort `
+  --set traefik.service.nodePort=30080 `
   --set-file keycloak.realmImport.content=keycloak/myrealm.json
 ```
 
@@ -128,7 +141,7 @@ For kind or minikube, use the Traefik service address or port-forwarding dependi
 The expected public entrypoint is:
 
 ```text
-http://redacta.local/
+http://redacta.local:8080/
 ```
 
 Expected routing:

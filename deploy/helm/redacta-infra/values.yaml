@@ -67,3 +67,4 @@ traefik:
   service:
     type: LoadBalancer
     port: 80
+    nodePort: ""
