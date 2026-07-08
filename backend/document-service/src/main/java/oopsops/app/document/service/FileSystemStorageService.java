@@ -1,7 +1,7 @@
 package oopsops.app.document.service;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Profile;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import oopsops.app.document.exception.StorageException;
@@ -10,7 +10,11 @@ import java.io.IOException;
 import java.nio.file.*;
 
 @Service
-@Profile({"dev","test"})
+@ConditionalOnProperty(
+        name = "storage.type",
+        havingValue = "filesystem",
+        matchIfMissing = true
+)
 public class FileSystemStorageService implements StorageService {
 
     private final Path rootLocation;

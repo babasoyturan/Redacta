@@ -1,11 +1,14 @@
 package oopsops.app.document.service;
 
-import org.springframework.context.annotation.Profile;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
-@Profile("prod")
+@ConditionalOnProperty(
+        name = "storage.type",
+        havingValue = "s3"
+)
 public class S3StorageService implements StorageService {
 
     @Override
