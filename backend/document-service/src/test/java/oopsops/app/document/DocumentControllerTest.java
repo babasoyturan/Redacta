@@ -17,6 +17,7 @@ import oopsops.app.document.controller.DocumentController;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 
 import java.util.Arrays;
 import java.util.List;
@@ -37,6 +38,9 @@ public class DocumentControllerTest {
 
     @MockitoBean
     private Jwt jwt;
+
+    @MockitoBean
+    private JwtDecoder jwtDecoder;
 
     @MockitoBean
     private DocumentService documentService;
