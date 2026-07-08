@@ -5,6 +5,7 @@ from typing_extensions import TypedDict
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
 from langchain.chat_models import init_chat_model
+from local_fallback import summarize_text, uses_local_fallback
 
 load_dotenv()
 
@@ -18,6 +19,9 @@ class SummarizerState(TypedDict):
 def summarize(state: SummarizerState):
     user_msg = state["messages"][-1]
     level = state["level"]
+
+    if uses_local_fallback():
+        return {"summarized_text": summarize_text(user_msg.content, level)}
 
     level_prompt_map = {
         "short": "Provide a short summary of the following text",

@@ -10,6 +10,7 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 from vector_store import VectorStoreManager
+from local_fallback import answer_chat, uses_local_fallback
 import json
 
 
@@ -24,9 +25,12 @@ class ConversationState(TypedDict):
 class ConversationManager:
     def __init__(self, vector_store: VectorStoreManager):
         self.vector_store = vector_store
-        self.llm = init_chat_model(
-            "openai:gpt-4-0125-preview", temperature=0.7
-        )
+        self.local_fallback = uses_local_fallback()
+        self.llm = None
+        if not self.local_fallback:
+            self.llm = init_chat_model(
+                "openai:gpt-4-0125-preview", temperature=0.7
+            )
         self.conversations: Dict[str, List[Dict]] = {}
 
         self.rag_prompt = ChatPromptTemplate.from_messages(
@@ -83,6 +87,9 @@ class ConversationManager:
         messages = state["messages"]
         context = state.get("context", "")
         query = state["query"]
+
+        if self.local_fallback:
+            return {"response": answer_chat(query=query, context=context)}
 
         chat_history = []
         for msg in messages[:-1]:

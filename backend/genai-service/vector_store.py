@@ -12,27 +12,35 @@ from langchain_community.document_loaders import PyPDFLoader, TextLoader
 from langchain.schema import Document
 import hashlib
 from datetime import datetime
+from local_fallback import uses_local_fallback
 
 
 class VectorStoreManager:
     def __init__(self, persist_directory: str = "./chroma_db"):
         self.persist_directory = persist_directory
         os.makedirs(persist_directory, exist_ok=True)
-
-        self.embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
-
-        self.client = chromadb.PersistentClient(
-            path=persist_directory,
-            settings=Settings(anonymized_telemetry=False, allow_reset=True),
-        )
+        self.local_fallback = uses_local_fallback()
+        self.local_documents: Dict[str, List[Document]] = {}
 
         self.collection_name = "documents"
-        self.vectorstore = Chroma(
-            client=self.client,
-            collection_name=self.collection_name,
-            embedding_function=self.embeddings,
-            persist_directory=persist_directory,
-        )
+        self.embeddings = None
+        self.client = None
+        self.vectorstore = None
+
+        if not self.local_fallback:
+            self.embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+
+            self.client = chromadb.PersistentClient(
+                path=persist_directory,
+                settings=Settings(anonymized_telemetry=False, allow_reset=True),
+            )
+
+            self.vectorstore = Chroma(
+                client=self.client,
+                collection_name=self.collection_name,
+                embedding_function=self.embeddings,
+                persist_directory=persist_directory,
+            )
 
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1000,
@@ -91,14 +99,17 @@ class VectorStoreManager:
                 }
             )
 
-        self.vectorstore.add_documents(chunks)
-
         self.document_metadata[document_id] = {
             "filename": filename,
             "file_type": "pdf",
             "total_chunks": len(chunks),
             "upload_time": datetime.utcnow().isoformat(),
         }
+
+        if self.local_fallback:
+            self.local_documents[document_id] = chunks
+        else:
+            self.vectorstore.add_documents(chunks)
 
         return document_id, len(chunks)
 
@@ -134,14 +145,17 @@ class VectorStoreManager:
                 }
             )
 
-        self.vectorstore.add_documents(chunks)
-
         self.document_metadata[document_id] = {
             "filename": filename,
             "file_type": "markdown",
             "total_chunks": len(chunks),
             "upload_time": datetime.utcnow().isoformat(),
         }
+
+        if self.local_fallback:
+            self.local_documents[document_id] = chunks
+        else:
+            self.vectorstore.add_documents(chunks)
 
         return document_id, len(chunks)
 
@@ -190,8 +204,6 @@ class VectorStoreManager:
             if metadata:
                 chunk.metadata.update(metadata)
 
-        self.vectorstore.add_documents(chunks)
-
         self.document_metadata[document_id] = {
             "filename": title,
             "file_type": "text",
@@ -200,11 +212,23 @@ class VectorStoreManager:
             **(metadata or {}),
         }
 
+        if self.local_fallback:
+            self.local_documents[document_id] = chunks
+        else:
+            self.vectorstore.add_documents(chunks)
+
         return document_id, len(chunks)
 
     def search_documents(
         self, query: str, k: int = 5, document_ids: Optional[List[str]] = None
     ) -> List[Document]:
+        if self.local_fallback:
+            selected_ids = document_ids or list(self.local_documents.keys())
+            docs: List[Document] = []
+            for document_id in selected_ids:
+                docs.extend(self.local_documents.get(document_id, []))
+            return docs[:k]
+
         search_kwargs = {"k": k}
 
         if document_ids:
@@ -229,6 +253,10 @@ class VectorStoreManager:
         ]
 
     def delete_document(self, document_id: str) -> bool:
+        if self.local_fallback:
+            self.local_documents.pop(document_id, None)
+            return self.document_metadata.pop(document_id, None) is not None
+
         try:
             collection = self.client.get_collection(self.collection_name)
             collection.delete(where={"document_id": document_id})

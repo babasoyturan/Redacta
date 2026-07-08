@@ -18,6 +18,7 @@ from summarizer import graph as summarizer_graph
 from langchain.chat_models import init_chat_model
 from vector_store import VectorStoreManager
 from conversation_chain import ConversationManager
+from local_fallback import answer_chat, uses_local_fallback
 import os
 import tempfile
 import shutil
@@ -129,6 +130,14 @@ def summarize(request: SummarizeRequest):
 
 @app.post("/api/v1/genai/chat", response_model=ChatResponse)
 def chat(request: ChatRequest):
+    if uses_local_fallback():
+        return ChatResponse(
+            reply=answer_chat(
+                query=request.messages[-1].content if request.messages else "",
+                document=request.document or "",
+            )
+        )
+
     messages = []
     if request.document:
         messages.append(

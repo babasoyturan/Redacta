@@ -1,5 +1,4 @@
 from dotenv import load_dotenv
-import os
 import re
 from typing import Annotated, Literal, List
 from pydantic import BaseModel,RootModel
@@ -7,6 +6,7 @@ from typing_extensions import TypedDict
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
 from langchain.chat_models import init_chat_model
+from local_fallback import uses_local_fallback
 
 load_dotenv()
 
@@ -23,12 +23,6 @@ class AnonymizerState(TypedDict):
 
 class ChangedTermsResponse(BaseModel):  
     changed_terms: List[ChangedTerm]
-
-
-def _uses_local_fallback() -> bool:
-    value = os.getenv("GENAI_LOCAL_FALLBACK", "").strip().lower()
-    api_key = os.getenv("OPENAI_API_KEY", "").strip()
-    return value in {"1", "true", "yes", "on"} or api_key in {"", "local-placeholder"}
 
 
 def _extract_terms_locally(text: str, level: str) -> list[ChangedTerm]:
@@ -71,7 +65,7 @@ def extract_terms(state: AnonymizerState):
     user_msg = state["messages"][-1]
     level = state["level"]
 
-    if _uses_local_fallback():
+    if uses_local_fallback():
         return {"changed_terms": _extract_terms_locally(user_msg.content, level)}
 
     structured_llm = llm.with_structured_output(ChangedTermsResponse)
