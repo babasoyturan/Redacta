@@ -32,7 +32,7 @@ const DocumentParagraph = ({
     );
   }
 
-  let segments = [];
+  const segments: React.ReactNode[] = [];
   let lastIndex = 0;
 
   // Sort by position in text to process in order
