@@ -21,6 +21,7 @@ documentService:
     pullPolicy: ""
   service:
     port: 8091
+  storageLocation: /tmp/redacta-uploads
   databaseUrl: jdbc:postgresql://postgres:5432/redacta_documents
   jwtIssuerUri: http://keycloak:8080/realms/oopsops
 

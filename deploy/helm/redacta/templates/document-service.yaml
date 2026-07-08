@@ -39,6 +39,8 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.secrets.name }}
                   key: datasource-password
+            - name: STORAGE_LOCATION
+              value: {{ .Values.documentService.storageLocation | quote }}
             - name: SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI
               value: {{ .Values.documentService.jwtIssuerUri | quote }}
           readinessProbe:
