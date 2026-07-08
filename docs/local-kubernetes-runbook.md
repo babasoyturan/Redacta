@@ -334,6 +334,42 @@ Committed GitOps values are secrets-free:
 
 Do not point Argo CD at ignored `values-local.yaml` files. Those are only for manual local Helm experiments and may contain machine-local secret references.
 
+The Redacta GitHub repository is private, so Argo CD uses an SSH source URL:
+
+```text
+git@github.com:babasoyturan/Redacta.git
+```
+
+Create a dedicated read-only deploy key for Argo CD:
+
+```powershell
+$keyPath = "$env:USERPROFILE\.ssh\redacta_argocd"
+ssh-keygen -t ed25519 -C "argocd-redacta-local" -f $keyPath
+Get-Content "$keyPath.pub"
+```
+
+Add the public key in GitHub under `Settings -> Deploy keys -> Add deploy key`.
+Do not enable write access.
+
+After the deploy key is added in GitHub, create the Argo CD repository Secret.
+This Secret is cluster-local and must not be committed:
+
+```powershell
+kubectl create secret generic redacta-github-repo `
+  --namespace argocd `
+  --from-literal=type=git `
+  --from-literal=url=git@github.com:babasoyturan/Redacta.git `
+  --from-file=sshPrivateKey=$keyPath `
+  --dry-run=client `
+  -o yaml |
+kubectl apply -f -
+
+kubectl label secret redacta-github-repo `
+  --namespace argocd `
+  argocd.argoproj.io/secret-type=repository `
+  --overwrite
+```
+
 Install Argo CD:
 
 ```powershell

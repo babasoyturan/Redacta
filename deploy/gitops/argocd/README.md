@@ -16,6 +16,16 @@ The Applications sync three independent layers:
 - `redacta-app-local`: frontend and backend application services
 - `redacta-monitoring-local`: kube-prometheus-stack with Prometheus and Grafana
 
+The GitHub repository is referenced with SSH:
+
+```text
+git@github.com:babasoyturan/Redacta.git
+```
+
+For a private repository, create a dedicated read-only GitHub deploy key and
+register its private key in Argo CD as a repository Secret in the `argocd`
+namespace. Do not commit that Secret or private key.
+
 Secrets are intentionally not managed by these GitOps manifests. For local work,
 create `redacta-infra-secrets` and `redacta-app-runtime-secrets` manually before
 syncing the Applications.

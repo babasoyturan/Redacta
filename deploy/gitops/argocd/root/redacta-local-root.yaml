@@ -6,7 +6,7 @@ metadata:
 spec:
   project: redacta-local
   source:
-    repoURL: https://github.com/babasoyturan/Redacta.git
+    repoURL: git@github.com:babasoyturan/Redacta.git
     targetRevision: main
     path: deploy/gitops/argocd/applications
     directory:
