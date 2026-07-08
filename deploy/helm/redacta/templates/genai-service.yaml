@@ -10,7 +10,9 @@ metadata:
     {{- include "redacta.labels" . | nindent 4 }}
     app.kubernetes.io/component: genai-service
 spec:
+  {{- if not (and .Values.autoscaling.enabled .Values.autoscaling.components.genaiService) }}
   replicas: {{ .Values.genaiService.replicaCount }}
+  {{- end }}
   selector:
     matchLabels:
       {{- include "redacta.selectorLabels" . | nindent 6 }}
@@ -33,6 +35,8 @@ spec:
               value: {{ $anonymizationUrl | quote }}
             - name: GENAI_LOCAL_FALLBACK
               value: {{ .Values.genaiService.localFallback | quote }}
+            - name: GENAI_OPENAI_MODEL
+              value: {{ .Values.genaiService.openaiModel | quote }}
             - name: OPENAI_API_KEY
               valueFrom:
                 secretKeyRef:
@@ -46,6 +50,8 @@ spec:
             httpGet:
               path: /health
               port: http
+          resources:
+            {{- toYaml .Values.genaiService.resources | nindent 12 }}
 ---
 apiVersion: v1
 kind: Service

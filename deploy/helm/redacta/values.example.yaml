@@ -13,3 +13,10 @@ documentService:
 
 genaiService:
   localFallback: false
+  openaiModel: gpt-4.1-mini
+
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 70
