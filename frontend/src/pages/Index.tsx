@@ -58,7 +58,6 @@ const Index = () => {
   };
   
   const handleUpload = async () => {
-    console.log('API:', import.meta.env.VITE_API_URL);
     if (!selectedFile) return;
 
     setIsUploading(true);

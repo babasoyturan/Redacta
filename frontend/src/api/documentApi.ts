@@ -2,7 +2,7 @@ import axios, { AxiosHeaders, InternalAxiosRequestConfig } from "axios";
 import { refreshAccessToken } from "@/services/tokenService";
 
 const documentApi = axios.create({
-  baseURL: `${import.meta.env.VITE_API_URL}/api/v1/documents`,
+  baseURL: "/api/v1/documents",
 });
 
 documentApi.interceptors.request.use((config: InternalAxiosRequestConfig) => {

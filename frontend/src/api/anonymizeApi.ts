@@ -2,7 +2,7 @@ import axios, { AxiosHeaders, InternalAxiosRequestConfig } from "axios";
 import { refreshAccessToken } from "@/services/tokenService";
 
 const anonymizeApi = axios.create({
-  baseURL: `${import.meta.env.VITE_API_URL}/api/v1/anonymization`,
+  baseURL: "/api/v1/anonymization",
 });
 
 anonymizeApi.interceptors.request.use((config: InternalAxiosRequestConfig) => {
