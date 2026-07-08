@@ -1,6 +1,6 @@
 # Local Kubernetes Runbook
 
-This runbook describes the local-first deployment path for Redacta before the cloud subscription is available.
+This runbook describes the local-first deployment path for Redacta. The local deployment must be validated before the same Kubernetes and Helm model is promoted to cloud.
 
 ## Scope
 
@@ -21,6 +21,19 @@ The local Kubernetes environment runs the same application routing model planned
 
 Docker must be running before image build or Kubernetes deployment checks can work.
 
+Recommended runtime gate:
+
+```powershell
+docker context use desktop-linux
+docker info
+docker run --rm hello-world
+kubectl version --client
+helm version
+kind version
+```
+
+Continue only after Docker reports a running Linux engine and the `hello-world` container exits successfully.
+
 ## Create a kind Cluster
 
 For kind-based local testing, the repository includes `deploy/local/kind-config.yaml`.
@@ -28,6 +41,8 @@ For kind-based local testing, the repository includes `deploy/local/kind-config.
 ```powershell
 kind create cluster --config deploy/local/kind-config.yaml
 kubectl config use-context kind-redacta-local
+kubectl get nodes
+kubectl get pods -A
 ```
 
 This maps local host port `8080` to the kind node port `30080`.
@@ -47,11 +62,17 @@ docker build -f frontend/Dockerfile frontend -t redacta-frontend:local
 For kind-based clusters, load the images into the cluster after building them:
 
 ```powershell
-kind load docker-image redacta-document-service:local
-kind load docker-image redacta-authentication-service:local
-kind load docker-image redacta-anonymization-service:local
-kind load docker-image redacta-genai-service:local
-kind load docker-image redacta-frontend:local
+kind load docker-image redacta-document-service:local --name redacta-local
+kind load docker-image redacta-authentication-service:local --name redacta-local
+kind load docker-image redacta-anonymization-service:local --name redacta-local
+kind load docker-image redacta-genai-service:local --name redacta-local
+kind load docker-image redacta-frontend:local --name redacta-local
+```
+
+Verify the images inside the kind node:
+
+```powershell
+docker exec redacta-local-control-plane crictl images
 ```
 
 ## Local Secrets
@@ -135,6 +156,12 @@ For Docker Desktop Kubernetes this is usually:
 ```
 
 For kind or minikube, use the Traefik service address or port-forwarding depending on the local cluster networking mode.
+
+For the included kind config, add this hosts entry if it is not already present:
+
+```text
+127.0.0.1 redacta.local
+```
 
 ## Verification
 
