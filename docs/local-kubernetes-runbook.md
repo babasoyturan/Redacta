@@ -238,6 +238,127 @@ kubectl get hpa -n redacta
 kubectl top pods -n redacta
 ```
 
+## CI Workflow Validation
+
+The repository has separate GitHub Actions workflows for frontend and backend validation:
+
+- `.github/workflows/frontend-ci.yml` runs `npm ci`, frontend lint, frontend build, and frontend Docker image build validation.
+- `.github/workflows/backend-ci.yml` runs Java 21 tests, GenAI pytest, and Docker image build validation for all backend services.
+
+These workflows intentionally do not deploy anything. Deployment is handled by Helm locally and later by GitOps/Argo CD.
+
+Equivalent local checks:
+
+```powershell
+cd frontend
+npm ci
+npm run lint
+npm run build
+docker build -t redacta-frontend:ci-test .
+cd ..
+
+cd backend
+$env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-21.0.10.7-hotspot"
+.\gradlew.bat :document-service:test :authentication-service:test :anonymization-service:test --console=plain
+cd ..
+
+docker build -t redacta-document-service:ci-test -f backend/document-service/Dockerfile backend
+docker build -t redacta-authentication-service:ci-test -f backend/authentication-service/Dockerfile backend
+docker build -t redacta-anonymization-service:ci-test -f backend/anonymization-service/Dockerfile backend
+docker build -t redacta-genai-service:ci-test backend/genai-service
+docker run --rm -v "${PWD}\backend\genai-service\tests:/app/tests:ro" redacta-genai-service:ci-test python -m pytest tests -q
+```
+
+## Prometheus And Grafana
+
+Local monitoring uses the official `kube-prometheus-stack` Helm chart, not a custom monitoring chart.
+
+Install or upgrade it:
+
+```powershell
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update prometheus-community
+
+helm upgrade --install monitoring prometheus-community/kube-prometheus-stack `
+  --namespace monitoring `
+  --create-namespace `
+  --set fullnameOverride=monitoring `
+  --set grafana.adminUser=admin `
+  --set grafana.adminPassword=admin `
+  --set grafana.service.type=ClusterIP `
+  --set prometheus.prometheusSpec.retention=6h `
+  --set prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false `
+  --set-json prometheus.prometheusSpec.serviceMonitorNamespaceSelector='{}' `
+  --set prometheus.prometheusSpec.podMonitorSelectorNilUsesHelmValues=false `
+  --set-json prometheus.prometheusSpec.podMonitorNamespaceSelector='{}' `
+  --set prometheus.prometheusSpec.ruleSelectorNilUsesHelmValues=false `
+  --set-json prometheus.prometheusSpec.ruleNamespaceSelector='{}' `
+  --wait `
+  --timeout 10m
+```
+
+After the monitoring CRDs exist, enable ServiceMonitor rendering in the app chart:
+
+```yaml
+monitoring:
+  serviceMonitor:
+    enabled: true
+    interval: 15s
+    scrapeTimeout: 10s
+```
+
+Verify:
+
+```powershell
+kubectl get pods -n monitoring
+kubectl get servicemonitor -A
+kubectl port-forward -n monitoring svc/monitoring-grafana 3001:80
+```
+
+Grafana is then available at `http://localhost:3001` with the local demo credentials configured above.
+
+## GitOps With Argo CD
+
+Argo CD manifests are under `deploy/gitops/argocd`.
+
+The local GitOps model has one root Application and three child Applications:
+
+- `redacta-infra-local`: Postgres, Keycloak, and Traefik from `deploy/helm/redacta-infra`
+- `redacta-monitoring-local`: official `kube-prometheus-stack`
+- `redacta-app-local`: frontend and backend services from `deploy/helm/redacta`
+
+Committed GitOps values are secrets-free:
+
+- `deploy/helm/redacta-infra/values-gitops-local.yaml`
+- `deploy/helm/redacta/values-gitops-local.yaml`
+
+Do not point Argo CD at ignored `values-local.yaml` files. Those are only for manual local Helm experiments and may contain machine-local secret references.
+
+Install Argo CD:
+
+```powershell
+kubectl create namespace argocd
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+kubectl rollout status deployment/argocd-server -n argocd --timeout=5m
+```
+
+Apply the project and root Application after the GitOps files are committed and pushed to `main`:
+
+```powershell
+kubectl apply -f deploy/gitops/argocd/projects/redacta-local-project.yaml
+kubectl apply -f deploy/gitops/argocd/root/redacta-local-root.yaml
+```
+
+Manual sync order for first adoption:
+
+```text
+redacta-infra-local
+redacta-monitoring-local
+redacta-app-local
+```
+
+Automated sync is disabled during first local adoption. Enable it only after the Applications are `Synced` and `Healthy`.
+
 ## Local DNS
 
 Point `redacta.local` to the local Traefik entrypoint address.

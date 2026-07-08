@@ -1,0 +1,29 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: redacta-infra-local
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: redacta-local
+  source:
+    repoURL: https://github.com/babasoyturan/Redacta.git
+    targetRevision: main
+    path: deploy/helm/redacta-infra
+    helm:
+      releaseName: redacta-infra
+      valueFiles:
+        - values-gitops-local.yaml
+      parameters:
+        - name: keycloak.realmImport.enabled
+          value: "true"
+      fileParameters:
+        - name: keycloak.realmImport.content
+          path: realm/myrealm.json
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: redacta
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true

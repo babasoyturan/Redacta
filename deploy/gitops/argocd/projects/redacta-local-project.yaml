@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: redacta-local
+  namespace: argocd
+spec:
+  description: Local GitOps project for Redacta
+  sourceRepos:
+    - https://github.com/babasoyturan/Redacta.git
+    - https://prometheus-community.github.io/helm-charts
+  destinations:
+    - namespace: argocd
+      server: https://kubernetes.default.svc
+    - namespace: redacta
+      server: https://kubernetes.default.svc
+    - namespace: monitoring
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: "*"
+      kind: "*"
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"

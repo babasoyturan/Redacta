@@ -1,0 +1,11 @@
+secrets:
+  create: false
+
+keycloak:
+  realmImport:
+    enabled: false
+
+traefik:
+  service:
+    type: NodePort
+    nodePort: 30080

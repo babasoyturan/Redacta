@@ -1,0 +1,39 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: redacta-monitoring-local
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: redacta-local
+  source:
+    repoURL: https://prometheus-community.github.io/helm-charts
+    chart: kube-prometheus-stack
+    targetRevision: "*"
+    helm:
+      releaseName: monitoring
+      values: |
+        fullnameOverride: monitoring
+        grafana:
+          adminUser: admin
+          adminPassword: admin
+          service:
+            type: ClusterIP
+        prometheus:
+          prometheusSpec:
+            retention: 6h
+            serviceMonitorNamespaceSelector: {}
+            serviceMonitorSelectorNilUsesHelmValues: false
+            podMonitorNamespaceSelector: {}
+            podMonitorSelectorNilUsesHelmValues: false
+            ruleNamespaceSelector: {}
+            ruleSelectorNilUsesHelmValues: false
+        alertmanager:
+          enabled: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true

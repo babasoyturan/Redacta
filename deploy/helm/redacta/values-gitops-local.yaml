@@ -1,0 +1,22 @@
+secrets:
+  create: false
+  name: redacta-app-runtime-secrets
+
+ingress:
+  host: localhost
+
+genaiService:
+  localFallback: false
+  openaiModel: gpt-4.1-mini
+
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 2
+  targetCPUUtilizationPercentage: 70
+
+monitoring:
+  serviceMonitor:
+    enabled: true
+    interval: 15s
+    scrapeTimeout: 10s
