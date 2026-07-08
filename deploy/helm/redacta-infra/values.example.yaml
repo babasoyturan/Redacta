@@ -1,0 +1,11 @@
+secrets:
+  create: true
+  values:
+    postgresPassword: "<local-postgres-password>"
+    keycloakAdminUsername: "<local-keycloak-admin-user>"
+    keycloakAdminPassword: "<local-keycloak-admin-password>"
+
+keycloak:
+  realmImport:
+    enabled: true
+    content: ""
