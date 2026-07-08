@@ -1,0 +1,31 @@
+plugins {
+    id 'org.springframework.boot' version '3.5.0'
+    id 'java'
+}
+
+dependencies {
+    // JPA & Postgres
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation "org.postgresql:postgresql"
+
+    // PDF parsing
+    implementation 'org.apache.pdfbox:pdfbox:2.0.27'
+
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9'
+
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+
+     //Prometheus dependencies
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'io.micrometer:micrometer-registry-prometheus'
+    
+    // Testing dependencies
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testRuntimeOnly 'com.h2database:h2'
+    
+}
+
+test {
+    useJUnitPlatform()
+}
