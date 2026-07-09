@@ -6,7 +6,7 @@ Apply order:
 
 1. Install Argo CD into the `argocd` namespace.
 2. Create the manual runtime Secrets in `redacta`.
-3. Apply `projects/redacta-local-project.yaml`.
+3. Apply `projects/redacta-local-project.yaml` and `projects/redacta-monitoring-local-project.yaml`.
 4. Apply `root/redacta-local-root.yaml`.
 5. Manually sync child Applications in this order: infra, monitoring, app.
 
@@ -15,6 +15,10 @@ The Applications sync three independent layers:
 - `redacta-infra-local`: Postgres, Keycloak, and Traefik
 - `redacta-app-local`: frontend and backend application services
 - `redacta-monitoring-local`: kube-prometheus-stack with Prometheus and Grafana
+
+Monitoring uses a separate Argo CD project because kube-prometheus-stack manages
+some scrape helper Services in `kube-system`. The application and infrastructure
+project stays limited to `argocd` and `redacta`.
 
 The GitHub repository is referenced with SSH:
 

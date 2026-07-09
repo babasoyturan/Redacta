@@ -327,6 +327,11 @@ The local GitOps model has one root Application and three child Applications:
 - `redacta-monitoring-local`: official `kube-prometheus-stack`
 - `redacta-app-local`: frontend and backend services from `deploy/helm/redacta`
 
+Monitoring uses a separate Argo CD project:
+
+- `redacta-local`: application and infrastructure resources in `argocd` and `redacta`
+- `redacta-monitoring-local`: monitoring resources in `monitoring` and kube-prometheus-stack helper Services in `kube-system`
+
 Committed GitOps values are secrets-free:
 
 - `deploy/helm/redacta-infra/values-gitops-local.yaml`
@@ -382,6 +387,7 @@ Apply the project and root Application after the GitOps files are committed and 
 
 ```powershell
 kubectl apply -f deploy/gitops/argocd/projects/redacta-local-project.yaml
+kubectl apply -f deploy/gitops/argocd/projects/redacta-monitoring-local-project.yaml
 kubectl apply -f deploy/gitops/argocd/root/redacta-local-root.yaml
 ```
 
