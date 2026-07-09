@@ -332,6 +332,8 @@ Monitoring uses a separate Argo CD project:
 - `redacta-local`: application and infrastructure resources in `argocd` and `redacta`
 - `redacta-monitoring-local`: monitoring resources in `monitoring` and kube-prometheus-stack helper Services in `kube-system`
 
+The monitoring Application uses `ServerSideApply=true` because kube-prometheus-stack CRDs are large enough to hit the Kubernetes client-side apply annotation limit.
+
 Committed GitOps values are secrets-free:
 
 - `deploy/helm/redacta-infra/values-gitops-local.yaml`

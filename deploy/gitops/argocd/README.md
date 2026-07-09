@@ -20,6 +20,9 @@ Monitoring uses a separate Argo CD project because kube-prometheus-stack manages
 some scrape helper Services in `kube-system`. The application and infrastructure
 project stays limited to `argocd` and `redacta`.
 
+The monitoring Application uses server-side apply because kube-prometheus-stack
+ships large CRDs that can exceed the client-side apply annotation limit.
+
 The GitHub repository is referenced with SSH:
 
 ```text
