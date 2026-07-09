@@ -16,8 +16,10 @@ spec:
       values: |
         fullnameOverride: monitoring
         grafana:
-          adminUser: admin
-          adminPassword: admin
+          admin:
+            existingSecret: monitoring-grafana-admin
+            userKey: admin-user
+            passwordKey: admin-password
           service:
             type: ClusterIP
         prometheus:

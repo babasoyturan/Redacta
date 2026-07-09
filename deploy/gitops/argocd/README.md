@@ -37,6 +37,9 @@ Secrets are intentionally not managed by these GitOps manifests. For local work,
 create `redacta-infra-secrets` and `redacta-app-runtime-secrets` manually before
 syncing the Applications.
 
+Monitoring also expects a manually managed `monitoring-grafana-admin` Secret in
+the `monitoring` namespace with `admin-user` and `admin-password` keys.
+
 Automated sync is intentionally disabled for local adoption. Enable automated
 sync only after the manually installed Helm releases are adopted cleanly and all
 Applications are `Synced` and `Healthy`.

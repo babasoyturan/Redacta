@@ -279,12 +279,22 @@ Install or upgrade it:
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update prometheus-community
 
+kubectl create namespace monitoring --dry-run=client -o yaml | kubectl apply -f -
+kubectl create secret generic monitoring-grafana-admin `
+  --namespace monitoring `
+  --from-literal=admin-user=admin `
+  --from-literal=admin-password="<local-grafana-password>" `
+  --dry-run=client `
+  -o yaml |
+kubectl apply -f -
+
 helm upgrade --install monitoring prometheus-community/kube-prometheus-stack `
   --namespace monitoring `
   --create-namespace `
   --set fullnameOverride=monitoring `
-  --set grafana.adminUser=admin `
-  --set grafana.adminPassword=admin `
+  --set grafana.admin.existingSecret=monitoring-grafana-admin `
+  --set grafana.admin.userKey=admin-user `
+  --set grafana.admin.passwordKey=admin-password `
   --set grafana.service.type=ClusterIP `
   --set prometheus.prometheusSpec.retention=6h `
   --set prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false `
