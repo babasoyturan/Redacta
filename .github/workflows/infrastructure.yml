@@ -1,0 +1,363 @@
+name: Infrastructure CI/CD
+
+on:
+  push:
+    branches:
+      - dev
+      - main
+    paths:
+      - "terraform/**"
+      - "scripts/bootstrap-tfstate.ps1"
+      - ".github/workflows/infrastructure.yml"
+  pull_request:
+    branches:
+      - dev
+      - main
+    paths:
+      - "terraform/**"
+      - "scripts/bootstrap-tfstate.ps1"
+      - ".github/workflows/infrastructure.yml"
+  workflow_dispatch:
+    inputs:
+      stack:
+        description: Terraform stack to plan
+        required: true
+        type: choice
+        options:
+          - shared
+          - development
+          - production
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: infrastructure-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  TF_IN_AUTOMATION: "true"
+  TF_INPUT: "false"
+  TERRAFORM_VERSION: "1.9.8"
+
+jobs:
+  validate:
+    name: Validate Terraform
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Terraform format check
+        run: terraform fmt -check -recursive terraform
+
+      - name: Terraform validate stacks
+        shell: bash
+        run: |
+          set -euo pipefail
+          for stack in shared development production; do
+            terraform -chdir="terraform/stacks/${stack}" init -backend=false
+            terraform -chdir="terraform/stacks/${stack}" validate
+          done
+
+      - name: Trivy Terraform IaC scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: config
+          scan-ref: terraform
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+          format: table
+
+  plan:
+    name: Plan ${{ matrix.stack }}
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+    strategy:
+      fail-fast: false
+      matrix:
+        stack:
+          - shared
+          - development
+          - production
+    env:
+      TFSTATE_STORAGE_ACCOUNT_NAME: ${{ vars.TFSTATE_STORAGE_ACCOUNT_NAME }}
+      AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
+      AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      AZURE_CLIENT_ID_TERRAFORM_SHARED: ${{ vars.AZURE_CLIENT_ID_TERRAFORM_SHARED }}
+      AZURE_CLIENT_ID_TERRAFORM_DEVELOPMENT: ${{ vars.AZURE_CLIENT_ID_TERRAFORM_DEVELOPMENT }}
+      AZURE_CLIENT_ID_TERRAFORM_PRODUCTION: ${{ vars.AZURE_CLIENT_ID_TERRAFORM_PRODUCTION }}
+      TF_VAR_location: ${{ vars.AZURE_LOCATION }}
+      TF_VAR_acr_name: ${{ vars.ACR_NAME }}
+      TF_VAR_dns_zone_name: ${{ vars.DNS_ZONE_NAME }}
+    steps:
+      - name: Skip non-selected workflow dispatch stacks
+        if: github.event_name == 'workflow_dispatch' && inputs.stack != matrix.stack
+        run: echo "Stack ${{ matrix.stack }} was not selected."
+
+      - name: Checkout
+        if: github.event_name != 'workflow_dispatch' || inputs.stack == matrix.stack
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        if: github.event_name != 'workflow_dispatch' || inputs.stack == matrix.stack
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Select Azure identity
+        if: github.event_name != 'workflow_dispatch' || inputs.stack == matrix.stack
+        id: identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "${{ matrix.stack }}" in
+            shared)
+              client_id="${AZURE_CLIENT_ID_TERRAFORM_SHARED}"
+              ;;
+            development)
+              client_id="${AZURE_CLIENT_ID_TERRAFORM_DEVELOPMENT}"
+              ;;
+            production)
+              client_id="${AZURE_CLIENT_ID_TERRAFORM_PRODUCTION}"
+              ;;
+            *)
+              echo "Unsupported stack."
+              exit 1
+              ;;
+          esac
+
+          missing=false
+          for value in "$client_id" "$AZURE_TENANT_ID" "$AZURE_SUBSCRIPTION_ID" "$TFSTATE_STORAGE_ACCOUNT_NAME" "$AZURE_LOCATION"; do
+            if [ -z "$value" ]; then
+              missing=true
+            fi
+          done
+
+          if [ "${{ matrix.stack }}" = "shared" ]; then
+            for value in "$TF_VAR_acr_name" "$TF_VAR_dns_zone_name"; do
+              if [ -z "$value" ]; then
+                missing=true
+              fi
+            done
+          fi
+
+          if [ "$missing" = true ]; then
+            echo "::notice::Terraform plan skipped because required Azure or Terraform variables are not configured."
+            echo "can_run=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "client_id=$client_id" >> "$GITHUB_OUTPUT"
+          echo "can_run=true" >> "$GITHUB_OUTPUT"
+
+      - name: Azure login
+        if: steps.identity.outputs.can_run == 'true'
+        uses: azure/login@v2
+        with:
+          client-id: ${{ steps.identity.outputs.client_id }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Terraform init
+        if: steps.identity.outputs.can_run == 'true'
+        run: |
+          terraform -chdir="terraform/stacks/${{ matrix.stack }}" init \
+            -backend-config="storage_account_name=${TFSTATE_STORAGE_ACCOUNT_NAME}"
+
+      - name: Terraform plan
+        if: steps.identity.outputs.can_run == 'true'
+        run: terraform -chdir="terraform/stacks/${{ matrix.stack }}" plan -no-color
+
+  apply-development-shared:
+    name: Apply shared infrastructure for development line
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    environment: development-infrastructure
+    env:
+      TFSTATE_STORAGE_ACCOUNT_NAME: ${{ vars.TFSTATE_STORAGE_ACCOUNT_NAME }}
+      AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
+      AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      AZURE_CLIENT_ID_TERRAFORM_SHARED: ${{ vars.AZURE_CLIENT_ID_TERRAFORM_SHARED }}
+      TF_VAR_location: ${{ vars.AZURE_LOCATION }}
+      TF_VAR_acr_name: ${{ vars.ACR_NAME }}
+      TF_VAR_dns_zone_name: ${{ vars.DNS_ZONE_NAME }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Check shared configuration
+        id: config
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          missing=false
+          for value in "$AZURE_CLIENT_ID_TERRAFORM_SHARED" "$AZURE_TENANT_ID" "$AZURE_SUBSCRIPTION_ID" "$TFSTATE_STORAGE_ACCOUNT_NAME" "$AZURE_LOCATION" "$TF_VAR_acr_name" "$TF_VAR_dns_zone_name"; do
+            if [ -z "$value" ]; then
+              missing=true
+            fi
+          done
+
+          if [ "$missing" = true ]; then
+            echo "::notice::Shared apply skipped because required Azure or Terraform variables are not configured."
+            echo "can_run=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "can_run=true" >> "$GITHUB_OUTPUT"
+
+      - name: Azure login
+        if: steps.config.outputs.can_run == 'true'
+        uses: azure/login@v2
+        with:
+          client-id: ${{ env.AZURE_CLIENT_ID_TERRAFORM_SHARED }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Terraform init
+        if: steps.config.outputs.can_run == 'true'
+        run: |
+          terraform -chdir="terraform/stacks/shared" init \
+            -backend-config="storage_account_name=${TFSTATE_STORAGE_ACCOUNT_NAME}"
+
+      - name: Terraform apply
+        if: steps.config.outputs.can_run == 'true'
+        run: terraform -chdir="terraform/stacks/shared" apply -auto-approve -no-color
+
+  apply-development:
+    name: Apply development infrastructure
+    runs-on: ubuntu-latest
+    needs:
+      - validate
+      - apply-development-shared
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    environment: development-infrastructure
+    env:
+      TFSTATE_STORAGE_ACCOUNT_NAME: ${{ vars.TFSTATE_STORAGE_ACCOUNT_NAME }}
+      AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
+      AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      AZURE_CLIENT_ID_TERRAFORM_DEVELOPMENT: ${{ vars.AZURE_CLIENT_ID_TERRAFORM_DEVELOPMENT }}
+      TF_VAR_location: ${{ vars.AZURE_LOCATION }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Check development configuration
+        id: config
+        shell: bash
+        run: |
+          set -euo pipefail
+          missing=false
+          for value in "$AZURE_CLIENT_ID_TERRAFORM_DEVELOPMENT" "$AZURE_TENANT_ID" "$AZURE_SUBSCRIPTION_ID" "$TFSTATE_STORAGE_ACCOUNT_NAME" "$AZURE_LOCATION"; do
+            if [ -z "$value" ]; then
+              missing=true
+            fi
+          done
+
+          if [ "$missing" = true ]; then
+            echo "::notice::Development apply skipped because required Azure or Terraform variables are not configured."
+            echo "can_run=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "can_run=true" >> "$GITHUB_OUTPUT"
+
+      - name: Azure login
+        if: steps.config.outputs.can_run == 'true'
+        uses: azure/login@v2
+        with:
+          client-id: ${{ env.AZURE_CLIENT_ID_TERRAFORM_DEVELOPMENT }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Terraform init
+        if: steps.config.outputs.can_run == 'true'
+        run: |
+          terraform -chdir="terraform/stacks/development" init \
+            -backend-config="storage_account_name=${TFSTATE_STORAGE_ACCOUNT_NAME}"
+
+      - name: Terraform apply
+        if: steps.config.outputs.can_run == 'true'
+        run: terraform -chdir="terraform/stacks/development" apply -auto-approve -no-color
+
+  apply-production:
+    name: Apply production infrastructure
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment: production-infrastructure
+    env:
+      TFSTATE_STORAGE_ACCOUNT_NAME: ${{ vars.TFSTATE_STORAGE_ACCOUNT_NAME }}
+      AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
+      AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      AZURE_CLIENT_ID_TERRAFORM_PRODUCTION: ${{ vars.AZURE_CLIENT_ID_TERRAFORM_PRODUCTION }}
+      TF_VAR_location: ${{ vars.AZURE_LOCATION }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Check production configuration
+        id: config
+        shell: bash
+        run: |
+          set -euo pipefail
+          missing=false
+          for value in "$AZURE_CLIENT_ID_TERRAFORM_PRODUCTION" "$AZURE_TENANT_ID" "$AZURE_SUBSCRIPTION_ID" "$TFSTATE_STORAGE_ACCOUNT_NAME" "$AZURE_LOCATION"; do
+            if [ -z "$value" ]; then
+              missing=true
+            fi
+          done
+
+          if [ "$missing" = true ]; then
+            echo "::notice::Production apply skipped because required Azure or Terraform variables are not configured."
+            echo "can_run=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "can_run=true" >> "$GITHUB_OUTPUT"
+
+      - name: Azure login
+        if: steps.config.outputs.can_run == 'true'
+        uses: azure/login@v2
+        with:
+          client-id: ${{ env.AZURE_CLIENT_ID_TERRAFORM_PRODUCTION }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Terraform init
+        if: steps.config.outputs.can_run == 'true'
+        run: |
+          terraform -chdir="terraform/stacks/production" init \
+            -backend-config="storage_account_name=${TFSTATE_STORAGE_ACCOUNT_NAME}"
+
+      - name: Terraform apply
+        if: steps.config.outputs.can_run == 'true'
+        run: terraform -chdir="terraform/stacks/production" apply -auto-approve -no-color
