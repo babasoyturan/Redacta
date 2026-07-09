@@ -15,9 +15,11 @@ spec:
       releaseName: redacta
       valueFiles:
         - values-gitops-local.yaml
+        - versions.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: redacta
   syncPolicy:
+    automated: {}
     syncOptions:
       - CreateNamespace=true

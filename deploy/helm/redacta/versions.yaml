@@ -1,0 +1,24 @@
+frontend:
+  image:
+    repository: redacta-frontend
+    tag: local
+
+documentService:
+  image:
+    repository: redacta-document-service
+    tag: local
+
+authenticationService:
+  image:
+    repository: redacta-authentication-service
+    tag: local
+
+anonymizationService:
+  image:
+    repository: redacta-anonymization-service
+    tag: local
+
+genaiService:
+  image:
+    repository: redacta-genai-service
+    tag: local

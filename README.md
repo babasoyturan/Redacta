@@ -4,12 +4,12 @@ Redacta is a multi-service application that is being developed into a complete D
 
 ## Current Delivery Target
 
-The first complete delivery environment is local Kubernetes on Minikube. The project is intentionally being prepared so that the same delivery model can later be migrated to Azure when subscription access becomes available.
+The first complete delivery environment is local Kubernetes. The current checked local path uses kind with Docker Desktop, and the same Helm/GitOps model can also be adapted to Minikube. The project is intentionally being prepared so that the same delivery model can later be migrated to Azure when subscription access becomes available.
 
 The local platform will eventually include:
 
 - Docker containerization
-- Kubernetes on Minikube
+- Kubernetes on kind or Minikube
 - Helm
 - Traefik
 - Sealed Secrets
@@ -63,6 +63,13 @@ CI is responsible for validation, image publishing, and updating Git deployment 
 
 ## Current Project Status
 
-The repository currently contains only the cleaned application source code and this orientation README.
+The repository now contains the cleaned application source code plus the first local Kubernetes delivery layer:
 
-Dockerfiles, Docker Compose files, Helm charts, Kubernetes manifests, CI/CD workflows, Argo CD definitions, monitoring configuration, and other DevOps delivery artifacts will be added incrementally in later implementation stages.
+- Dockerfiles for the frontend and backend services
+- Helm charts for Redacta application and local infrastructure
+- local GitOps manifests for Argo CD
+- Prometheus/Grafana monitoring integration
+- frontend and backend GitHub Actions CI/CD workflow definitions
+- local Kubernetes runbook documentation
+
+The current local target is still intentionally separate from the later Azure target. Azure migration artifacts will be added in a later phase.
