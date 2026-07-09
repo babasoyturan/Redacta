@@ -344,6 +344,10 @@ Monitoring uses a separate Argo CD project:
 
 The monitoring Application uses `ServerSideApply=true` because kube-prometheus-stack CRDs are large enough to hit the Kubernetes client-side apply annotation limit.
 
+It also uses `skipCrds: true` because the CRDs are installed during the initial
+local Helm setup. Argo CD adopts the monitoring release and avoids repeatedly
+patching the large CRD definitions.
+
 Committed GitOps values are secrets-free:
 
 - `deploy/helm/redacta-infra/values-gitops-local.yaml`

@@ -40,6 +40,11 @@ syncing the Applications.
 Monitoring also expects a manually managed `monitoring-grafana-admin` Secret in
 the `monitoring` namespace with `admin-user` and `admin-password` keys.
 
+The monitoring Application uses `skipCrds: true`. Install the
+`kube-prometheus-stack` CRDs during the initial local Helm setup; Argo CD then
+adopts and manages the monitoring release without repeatedly patching the large
+CRD definitions.
+
 Automated sync is intentionally disabled for local adoption. Enable automated
 sync only after the manually installed Helm releases are adopted cleanly and all
 Applications are `Synced` and `Healthy`.

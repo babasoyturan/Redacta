@@ -13,6 +13,7 @@ spec:
     targetRevision: "*"
     helm:
       releaseName: monitoring
+      skipCrds: true
       values: |
         fullnameOverride: monitoring
         grafana:
