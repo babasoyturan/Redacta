@@ -3,24 +3,32 @@ name: Backend CI/CD
 on:
   push:
     branches:
+      - dev
       - main
     paths:
       - "backend/**"
       - "deploy/helm/redacta/Chart.yaml"
       - "deploy/helm/redacta/values.yaml"
-      - "deploy/helm/redacta/values-gitops-local.yaml"
+      - "deploy/helm/redacta/values-cloud-development.yaml"
+      - "deploy/helm/redacta/values-cloud-production.yaml"
+      - "deploy/helm/redacta/versions-cloud-development.yaml"
+      - "deploy/helm/redacta/versions-cloud-production.yaml"
       - "deploy/helm/redacta/values.example.yaml"
       - "deploy/helm/redacta/templates/**"
       - ".github/workflows/backend-ci-cd.yml"
       - "scripts/update-versions.mjs"
   pull_request:
     branches:
+      - dev
       - main
     paths:
       - "backend/**"
       - "deploy/helm/redacta/Chart.yaml"
       - "deploy/helm/redacta/values.yaml"
-      - "deploy/helm/redacta/values-gitops-local.yaml"
+      - "deploy/helm/redacta/values-cloud-development.yaml"
+      - "deploy/helm/redacta/values-cloud-production.yaml"
+      - "deploy/helm/redacta/versions-cloud-development.yaml"
+      - "deploy/helm/redacta/versions-cloud-production.yaml"
       - "deploy/helm/redacta/values.example.yaml"
       - "deploy/helm/redacta/templates/**"
       - ".github/workflows/backend-ci-cd.yml"
@@ -29,6 +37,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 concurrency:
   group: backend-ci-cd-${{ github.ref }}
@@ -94,7 +103,7 @@ jobs:
             anonymization=true
           fi
 
-          if grep -qE '^deploy/helm/redacta/(Chart\.yaml|values\.yaml|values-gitops-local\.yaml|values\.example\.yaml|templates/)' /tmp/backend-changed-files.txt; then
+          if grep -qE '^deploy/helm/redacta/(Chart\.yaml|values\.yaml|values-cloud-development\.yaml|values-cloud-production\.yaml|versions-cloud-development\.yaml|versions-cloud-production\.yaml|values\.example\.yaml|templates/)' /tmp/backend-changed-files.txt; then
             helm=true
           fi
 
@@ -272,11 +281,17 @@ jobs:
       - name: Setup Helm
         uses: azure/setup-helm@v4
 
-      - name: Helm lint
-        run: helm lint deploy/helm/redacta -f deploy/helm/redacta/values-gitops-local.yaml -f deploy/helm/redacta/versions.yaml
+      - name: Helm lint development
+        run: helm lint deploy/helm/redacta -f deploy/helm/redacta/values-cloud-development.yaml -f deploy/helm/redacta/versions-cloud-development.yaml
 
-      - name: Helm template
-        run: helm template redacta deploy/helm/redacta -f deploy/helm/redacta/values-gitops-local.yaml -f deploy/helm/redacta/versions.yaml
+      - name: Helm template development
+        run: helm template redacta deploy/helm/redacta -f deploy/helm/redacta/values-cloud-development.yaml -f deploy/helm/redacta/versions-cloud-development.yaml
+
+      - name: Helm lint production
+        run: helm lint deploy/helm/redacta -f deploy/helm/redacta/values-cloud-production.yaml -f deploy/helm/redacta/versions-cloud-production.yaml
+
+      - name: Helm template production
+        run: helm template redacta deploy/helm/redacta -f deploy/helm/redacta/values-cloud-production.yaml -f deploy/helm/redacta/versions-cloud-production.yaml
 
   versions-helper-validation:
     name: Validate GitOps version helper
@@ -292,14 +307,15 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Validate versions.yaml update helper
+      - name: Validate cloud version update helper
         run: |
           node scripts/update-versions.mjs \
-            frontend=redacta-frontend:local \
-            documentService=redacta-document-service:local \
-            authenticationService=redacta-authentication-service:local \
-            anonymizationService=redacta-anonymization-service:local \
-            genaiService=redacta-genai-service:local
+            --file deploy/helm/redacta/versions-cloud-development.yaml \
+            frontend=acrredacta7t9.azurecr.io/redacta-frontend:validation \
+            documentService=acrredacta7t9.azurecr.io/redacta-document-service:validation \
+            authenticationService=acrredacta7t9.azurecr.io/redacta-authentication-service:validation \
+            anonymizationService=acrredacta7t9.azurecr.io/redacta-anonymization-service:validation \
+            genaiService=acrredacta7t9.azurecr.io/redacta-genai-service:validation
 
   publish-config:
     name: Check backend publish credentials
@@ -314,7 +330,7 @@ jobs:
     if: |
       always() &&
       github.event_name == 'push' &&
-      github.ref == 'refs/heads/main' &&
+      (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') &&
       needs.detect.outputs.backend_any == 'true' &&
       !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled')
@@ -325,18 +341,21 @@ jobs:
         id: check
         shell: bash
         env:
-          DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
-          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+          ACR_NAME: ${{ vars.ACR_NAME }}
+          ACR_LOGIN_SERVER: ${{ vars.ACR_LOGIN_SERVER }}
+          AZURE_CLIENT_ID_ACR_PUSH: ${{ vars.AZURE_CLIENT_ID_ACR_PUSH }}
+          AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
           GITOPS_APP_ID: ${{ vars.GITOPS_APP_ID }}
           GITOPS_APP_PRIVATE_KEY: ${{ secrets.GITOPS_APP_PRIVATE_KEY }}
         run: |
           set -euo pipefail
 
-          if [ -n "$DOCKERHUB_USERNAME" ] && [ -n "$DOCKERHUB_TOKEN" ] && [ -n "$GITOPS_APP_ID" ] && [ -n "$GITOPS_APP_PRIVATE_KEY" ]; then
+          if [ -n "$ACR_NAME" ] && [ -n "$ACR_LOGIN_SERVER" ] && [ -n "$AZURE_CLIENT_ID_ACR_PUSH" ] && [ -n "$AZURE_TENANT_ID" ] && [ -n "$AZURE_SUBSCRIPTION_ID" ] && [ -n "$GITOPS_APP_ID" ] && [ -n "$GITOPS_APP_PRIVATE_KEY" ]; then
             echo "can_publish=true" >> "$GITHUB_OUTPUT"
           else
             echo "can_publish=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::Backend publish is skipped because Docker Hub or GitOps bot credentials are not configured."
+            echo "::notice::Backend publish is skipped because ACR, Azure OIDC, or GitOps bot configuration is missing."
           fi
 
   publish:
@@ -348,16 +367,21 @@ jobs:
     if: needs.publish-config.outputs.can_publish == 'true'
     env:
       IMAGE_TAG: ${{ needs.detect.outputs.short_sha }}-${{ github.run_number }}-${{ github.run_attempt }}
-      DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
+      ACR_NAME: ${{ vars.ACR_NAME }}
+      ACR_LOGIN_SERVER: ${{ vars.ACR_LOGIN_SERVER }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
+      - name: Azure login
+        uses: azure/login@v2
         with:
-          username: ${{ vars.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          client-id: ${{ vars.AZURE_CLIENT_ID_ACR_PUSH }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Login to Azure Container Registry
+        run: az acr login --name "$ACR_NAME"
 
       - name: Build affected backend images
         shell: bash
@@ -366,25 +390,25 @@ jobs:
           : > backend-version-updates.txt
 
           if [ "${{ needs.detect.outputs.document }}" = "true" ]; then
-            image="${DOCKERHUB_USERNAME}/redacta-document-service:${IMAGE_TAG}"
+            image="${ACR_LOGIN_SERVER}/redacta-document-service:${IMAGE_TAG}"
             docker build -f backend/document-service/Dockerfile backend -t "$image"
             echo "documentService=$image" >> backend-version-updates.txt
           fi
 
           if [ "${{ needs.detect.outputs.authentication }}" = "true" ]; then
-            image="${DOCKERHUB_USERNAME}/redacta-authentication-service:${IMAGE_TAG}"
+            image="${ACR_LOGIN_SERVER}/redacta-authentication-service:${IMAGE_TAG}"
             docker build -f backend/authentication-service/Dockerfile backend -t "$image"
             echo "authenticationService=$image" >> backend-version-updates.txt
           fi
 
           if [ "${{ needs.detect.outputs.anonymization }}" = "true" ]; then
-            image="${DOCKERHUB_USERNAME}/redacta-anonymization-service:${IMAGE_TAG}"
+            image="${ACR_LOGIN_SERVER}/redacta-anonymization-service:${IMAGE_TAG}"
             docker build -f backend/anonymization-service/Dockerfile backend -t "$image"
             echo "anonymizationService=$image" >> backend-version-updates.txt
           fi
 
           if [ "${{ needs.detect.outputs.genai }}" = "true" ]; then
-            image="${DOCKERHUB_USERNAME}/redacta-genai-service:${IMAGE_TAG}"
+            image="${ACR_LOGIN_SERVER}/redacta-genai-service:${IMAGE_TAG}"
             docker build -f backend/genai-service/Dockerfile backend/genai-service -t "$image"
             echo "genaiService=$image" >> backend-version-updates.txt
           fi
@@ -393,7 +417,7 @@ jobs:
         if: needs.detect.outputs.document == 'true'
         uses: aquasecurity/trivy-action@0.28.0
         with:
-          image-ref: ${{ vars.DOCKERHUB_USERNAME }}/redacta-document-service:${{ env.IMAGE_TAG }}
+          image-ref: ${{ vars.ACR_LOGIN_SERVER }}/redacta-document-service:${{ env.IMAGE_TAG }}
           severity: HIGH,CRITICAL
           exit-code: "1"
           format: table
@@ -402,7 +426,7 @@ jobs:
         if: needs.detect.outputs.authentication == 'true'
         uses: aquasecurity/trivy-action@0.28.0
         with:
-          image-ref: ${{ vars.DOCKERHUB_USERNAME }}/redacta-authentication-service:${{ env.IMAGE_TAG }}
+          image-ref: ${{ vars.ACR_LOGIN_SERVER }}/redacta-authentication-service:${{ env.IMAGE_TAG }}
           severity: HIGH,CRITICAL
           exit-code: "1"
           format: table
@@ -411,7 +435,7 @@ jobs:
         if: needs.detect.outputs.anonymization == 'true'
         uses: aquasecurity/trivy-action@0.28.0
         with:
-          image-ref: ${{ vars.DOCKERHUB_USERNAME }}/redacta-anonymization-service:${{ env.IMAGE_TAG }}
+          image-ref: ${{ vars.ACR_LOGIN_SERVER }}/redacta-anonymization-service:${{ env.IMAGE_TAG }}
           severity: HIGH,CRITICAL
           exit-code: "1"
           format: table
@@ -420,7 +444,7 @@ jobs:
         if: needs.detect.outputs.genai == 'true'
         uses: aquasecurity/trivy-action@0.28.0
         with:
-          image-ref: ${{ vars.DOCKERHUB_USERNAME }}/redacta-genai-service:${{ env.IMAGE_TAG }}
+          image-ref: ${{ vars.ACR_LOGIN_SERVER }}/redacta-genai-service:${{ env.IMAGE_TAG }}
           severity: HIGH,CRITICAL
           exit-code: "1"
           format: table
@@ -493,16 +517,33 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git pull --ff-only origin main
-          node scripts/update-versions.mjs --updates-file backend-version-updates.txt
+          case "${GITHUB_REF_NAME}" in
+            dev)
+              target_branch="dev"
+              versions_file="deploy/helm/redacta/versions-cloud-development.yaml"
+              ;;
+            main)
+              target_branch="main"
+              versions_file="deploy/helm/redacta/versions-cloud-production.yaml"
+              ;;
+            *)
+              echo "Unsupported GitOps writeback branch: ${GITHUB_REF_NAME}"
+              exit 1
+              ;;
+          esac
 
-          if git diff --quiet -- deploy/helm/redacta/versions.yaml; then
-            echo "versions.yaml already contains backend image versions."
+          git fetch origin "$target_branch"
+          git checkout "$target_branch"
+          git pull --ff-only origin "$target_branch"
+          node scripts/update-versions.mjs --file "$versions_file" --updates-file backend-version-updates.txt
+
+          if git diff --quiet -- "$versions_file"; then
+            echo "$versions_file already contains backend image versions."
             exit 0
           fi
 
           git config user.name "redacta-gitops-bot"
           git config user.email "redacta-gitops-bot[bot]@users.noreply.github.com"
-          git add deploy/helm/redacta/versions.yaml
+          git add "$versions_file"
           git commit -m "chore(gitops): update backend image versions"
-          git push origin main
+          git push origin "$target_branch"

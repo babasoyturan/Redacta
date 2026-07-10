@@ -2,7 +2,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 
-const filePath = resolve("deploy/helm/redacta/versions.yaml");
+const defaultFilePath = "deploy/helm/redacta/versions.yaml";
 const componentOrder = [
   "frontend",
   "documentService",
@@ -11,11 +11,21 @@ const componentOrder = [
   "genaiService",
 ];
 
-function readUpdates(argv) {
+function readOptions(argv) {
   const updates = [];
+  let filePath = defaultFilePath;
 
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
+
+    if (arg === "--file") {
+      filePath = argv[i + 1];
+      if (!filePath) {
+        throw new Error("--file requires a path");
+      }
+      i += 1;
+      continue;
+    }
 
     if (arg === "--updates-file") {
       const updatesFile = argv[i + 1];
@@ -35,10 +45,13 @@ function readUpdates(argv) {
     throw new Error("At least one update is required, for example frontend=repo/name:tag");
   }
 
-  return updates;
+  return {
+    filePath: resolve(filePath),
+    updates,
+  };
 }
 
-function parseVersions(content) {
+function parseVersions(content, targetFilePath) {
   const versions = {};
   let currentComponent = null;
   let inImage = false;
@@ -70,7 +83,7 @@ function parseVersions(content) {
 
   for (const component of componentOrder) {
     if (!versions[component]?.image?.repository || !versions[component]?.image?.tag) {
-      throw new Error(`versions.yaml is missing ${component}.image.repository or ${component}.image.tag`);
+      throw new Error(`${targetFilePath} is missing ${component}.image.repository or ${component}.image.tag`);
     }
   }
 
@@ -114,9 +127,10 @@ function stringifyVersions(versions) {
     .join("\n\n")}\n`;
 }
 
-const versions = parseVersions(readFileSync(filePath, "utf8"));
-for (const update of readUpdates(process.argv.slice(2))) {
+const options = readOptions(process.argv.slice(2));
+const versions = parseVersions(readFileSync(options.filePath, "utf8"), options.filePath);
+for (const update of options.updates) {
   applyUpdate(versions, update);
 }
 
-writeFileSync(filePath, stringifyVersions(versions), "utf8");
+writeFileSync(options.filePath, stringifyVersions(versions), "utf8");

@@ -13,6 +13,7 @@ spec:
       releaseName: redacta
       valueFiles:
         - values-cloud-production.yaml
+        - versions-cloud-production.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: redacta

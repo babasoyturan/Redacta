@@ -3,22 +3,33 @@ name: Frontend CI/CD
 on:
   push:
     branches:
+      - dev
       - main
     paths:
       - "frontend/**"
+      - "deploy/helm/redacta/values-cloud-development.yaml"
+      - "deploy/helm/redacta/values-cloud-production.yaml"
+      - "deploy/helm/redacta/versions-cloud-development.yaml"
+      - "deploy/helm/redacta/versions-cloud-production.yaml"
       - ".github/workflows/frontend-ci-cd.yml"
       - "scripts/update-versions.mjs"
   pull_request:
     branches:
+      - dev
       - main
     paths:
       - "frontend/**"
+      - "deploy/helm/redacta/values-cloud-development.yaml"
+      - "deploy/helm/redacta/values-cloud-production.yaml"
+      - "deploy/helm/redacta/versions-cloud-development.yaml"
+      - "deploy/helm/redacta/versions-cloud-production.yaml"
       - ".github/workflows/frontend-ci-cd.yml"
       - "scripts/update-versions.mjs"
   workflow_dispatch:
 
 permissions:
   contents: read
+  id-token: write
 
 concurrency:
   group: frontend-ci-cd-${{ github.ref }}
@@ -141,7 +152,7 @@ jobs:
     needs:
       - detect
       - validate
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.detect.outputs.frontend_changed == 'true'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') && needs.detect.outputs.frontend_changed == 'true'
     outputs:
       can_publish: ${{ steps.check.outputs.can_publish }}
     steps:
@@ -149,18 +160,21 @@ jobs:
         id: check
         shell: bash
         env:
-          DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
-          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+          ACR_NAME: ${{ vars.ACR_NAME }}
+          ACR_LOGIN_SERVER: ${{ vars.ACR_LOGIN_SERVER }}
+          AZURE_CLIENT_ID_ACR_PUSH: ${{ vars.AZURE_CLIENT_ID_ACR_PUSH }}
+          AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
           GITOPS_APP_ID: ${{ vars.GITOPS_APP_ID }}
           GITOPS_APP_PRIVATE_KEY: ${{ secrets.GITOPS_APP_PRIVATE_KEY }}
         run: |
           set -euo pipefail
 
-          if [ -n "$DOCKERHUB_USERNAME" ] && [ -n "$DOCKERHUB_TOKEN" ] && [ -n "$GITOPS_APP_ID" ] && [ -n "$GITOPS_APP_PRIVATE_KEY" ]; then
+          if [ -n "$ACR_NAME" ] && [ -n "$ACR_LOGIN_SERVER" ] && [ -n "$AZURE_CLIENT_ID_ACR_PUSH" ] && [ -n "$AZURE_TENANT_ID" ] && [ -n "$AZURE_SUBSCRIPTION_ID" ] && [ -n "$GITOPS_APP_ID" ] && [ -n "$GITOPS_APP_PRIVATE_KEY" ]; then
             echo "can_publish=true" >> "$GITHUB_OUTPUT"
           else
             echo "can_publish=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::Frontend publish is skipped because Docker Hub or GitOps bot credentials are not configured."
+            echo "::notice::Frontend publish is skipped because ACR, Azure OIDC, or GitOps bot configuration is missing."
           fi
 
   publish:
@@ -172,7 +186,8 @@ jobs:
       - publish-config
     if: needs.publish-config.outputs.can_publish == 'true'
     env:
-      IMAGE_REPOSITORY: ${{ vars.DOCKERHUB_USERNAME }}/redacta-frontend
+      ACR_NAME: ${{ vars.ACR_NAME }}
+      IMAGE_REPOSITORY: ${{ vars.ACR_LOGIN_SERVER }}/redacta-frontend
       IMAGE_TAG: ${{ needs.detect.outputs.short_sha }}-${{ github.run_number }}-${{ github.run_attempt }}
     outputs:
       image_repository: ${{ steps.image-meta.outputs.image_repository }}
@@ -187,11 +202,15 @@ jobs:
           echo "image_repository=${IMAGE_REPOSITORY}" >> "$GITHUB_OUTPUT"
           echo "image_tag=${IMAGE_TAG}" >> "$GITHUB_OUTPUT"
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
+      - name: Azure login
+        uses: azure/login@v2
         with:
-          username: ${{ vars.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          client-id: ${{ vars.AZURE_CLIENT_ID_ACR_PUSH }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Login to Azure Container Registry
+        run: az acr login --name "$ACR_NAME"
 
       - name: Build exact frontend image
         run: docker build -t "${IMAGE_REPOSITORY}:${IMAGE_TAG}" frontend
@@ -248,16 +267,33 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git pull --ff-only origin main
-          node scripts/update-versions.mjs "frontend=${{ needs.publish.outputs.image_repository }}:${{ needs.publish.outputs.image_tag }}"
+          case "${GITHUB_REF_NAME}" in
+            dev)
+              target_branch="dev"
+              versions_file="deploy/helm/redacta/versions-cloud-development.yaml"
+              ;;
+            main)
+              target_branch="main"
+              versions_file="deploy/helm/redacta/versions-cloud-production.yaml"
+              ;;
+            *)
+              echo "Unsupported GitOps writeback branch: ${GITHUB_REF_NAME}"
+              exit 1
+              ;;
+          esac
 
-          if git diff --quiet -- deploy/helm/redacta/versions.yaml; then
-            echo "versions.yaml already contains the frontend image version."
+          git fetch origin "$target_branch"
+          git checkout "$target_branch"
+          git pull --ff-only origin "$target_branch"
+          node scripts/update-versions.mjs --file "$versions_file" "frontend=${{ needs.publish.outputs.image_repository }}:${{ needs.publish.outputs.image_tag }}"
+
+          if git diff --quiet -- "$versions_file"; then
+            echo "$versions_file already contains the frontend image version."
             exit 0
           fi
 
           git config user.name "redacta-gitops-bot"
           git config user.email "redacta-gitops-bot[bot]@users.noreply.github.com"
-          git add deploy/helm/redacta/versions.yaml
+          git add "$versions_file"
           git commit -m "chore(gitops): update frontend image version"
-          git push origin main
+          git push origin "$target_branch"
