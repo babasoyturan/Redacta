@@ -130,6 +130,12 @@ resource "azurerm_role_assignment" "agic_resource_group_reader" {
   principal_id         = module.aks.ingress_application_gateway_identity_object_id
 }
 
+resource "azurerm_role_assignment" "agic_resource_group_network_contributor" {
+  scope                = azurerm_resource_group.development.id
+  role_definition_name = "Network Contributor"
+  principal_id         = module.aks.ingress_application_gateway_identity_object_id
+}
+
 resource "azurerm_role_assignment" "agic_application_gateway_contributor" {
   scope                = module.application_gateway.application_gateway_id
   role_definition_name = "Contributor"
