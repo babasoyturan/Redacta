@@ -16,7 +16,7 @@ documentService:
     tag: replace-me
   replicaCount: 1
   storageLocation: /mnt/redacta-documents
-  databaseUrl: jdbc:sqlserver://replace-sql-server.database.windows.net:1433;database=documentdb;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;
+  databaseUrl: jdbc:sqlserver://sql-redacta-dev-7t9.database.windows.net:1433;database=documentdb;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;
   jwtIssuerUri: https://dev.redacta.example.com/realms/oopsops
 
 authenticationService:
@@ -24,14 +24,14 @@ authenticationService:
     repository: acrredacta7t9.azurecr.io/redacta-authentication-service
     tag: replace-me
   replicaCount: 1
-  databaseUrl: jdbc:sqlserver://replace-sql-server.database.windows.net:1433;database=authdb;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;
+  databaseUrl: jdbc:sqlserver://sql-redacta-dev-7t9.database.windows.net:1433;database=authdb;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;
 
 anonymizationService:
   image:
     repository: acrredacta7t9.azurecr.io/redacta-anonymization-service
     tag: replace-me
   replicaCount: 1
-  databaseUrl: jdbc:sqlserver://replace-sql-server.database.windows.net:1433;database=anonymizationdb;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;
+  databaseUrl: jdbc:sqlserver://sql-redacta-dev-7t9.database.windows.net:1433;database=anonymizationdb;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;
   jwtIssuerUri: https://dev.redacta.example.com/realms/oopsops
 
 genaiService:
@@ -46,7 +46,7 @@ keycloak:
   authServerUrl: http://keycloak:8080
   database:
     vendor: mssql
-    url: jdbc:sqlserver://replace-sql-server.database.windows.net:1433;database=keycloakdb;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;
+    url: jdbc:sqlserver://sql-redacta-dev-7t9.database.windows.net:1433;database=keycloakdb;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;
 
 serviceAccount:
   create: true
@@ -60,16 +60,16 @@ serviceAccount:
 workloadIdentity:
   enabled: true
   clientIds:
-    documentService: replace-document-service-workload-identity-client-id
-    authenticationService: replace-authentication-service-workload-identity-client-id
-    anonymizationService: replace-anonymization-service-workload-identity-client-id
-    genaiService: replace-genai-service-workload-identity-client-id
-    keycloak: replace-keycloak-workload-identity-client-id
+    documentService: 413ffcff-84fe-49ad-8289-991281499f07
+    authenticationService: 1b63cbd7-93ff-421b-8259-41ae478e4683
+    anonymizationService: 38c1a761-67e3-43b1-8882-c6a675d9bd86
+    genaiService: 1f79720a-d52f-478d-a541-62c1c7f4ccee
+    keycloak: 5c937b47-e60f-442f-8936-14564ddb7175
 
 keyVault:
   csi:
     enabled: true
-    vaultName: replace-key-vault-name
+    vaultName: kv-redacta-dev-swec
     tenantId: 84f58ce9-43c8-4932-b908-591a8a3007d3
 
 secrets:
