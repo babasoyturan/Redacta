@@ -50,3 +50,13 @@ output "sql_server_fqdn" {
   description = "Production SQL server FQDN."
   value       = module.sql.sql_server_fqdn
 }
+
+output "workload_identity_client_ids" {
+  description = "Production workload identity client IDs keyed by application component."
+  value       = module.workload_identity.client_ids
+}
+
+output "workload_identity_service_account_names" {
+  description = "Production workload identity Kubernetes service accounts keyed by application component."
+  value       = module.workload_identity.service_account_names
+}

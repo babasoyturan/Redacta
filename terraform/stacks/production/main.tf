@@ -115,3 +115,16 @@ module "aks" {
   user_node_max_count             = var.user_node_max_count
   tags                            = local.common_tags
 }
+
+module "workload_identity" {
+  source = "../../modules/workload-identity"
+
+  name_prefix          = var.name_prefix
+  location             = azurerm_resource_group.production.location
+  resource_group_name  = azurerm_resource_group.production.name
+  oidc_issuer_url      = module.aks.oidc_issuer_url
+  kubernetes_namespace = local.application_namespace
+  key_vault_id         = module.key_vault.key_vault_id
+  workload_identities  = local.workload_identities
+  tags                 = local.common_tags
+}

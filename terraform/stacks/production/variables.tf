@@ -22,6 +22,12 @@ variable "name_prefix" {
   default     = "redacta-prod-swec"
 }
 
+variable "application_namespace" {
+  type        = string
+  description = "Kubernetes namespace for the production Redacta application."
+  default     = "redacta"
+}
+
 variable "address_space" {
   type        = list(string)
   description = "Production VNet address space."
