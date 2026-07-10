@@ -28,6 +28,12 @@ resource "azurerm_kubernetes_cluster" "this" {
     max_pods                     = 110
     temporary_name_for_rotation  = "systemtmp"
     tags                         = var.tags
+
+    upgrade_settings {
+      drain_timeout_in_minutes      = 0
+      max_surge                     = "10%"
+      node_soak_duration_in_minutes = 0
+    }
   }
 
   api_server_access_profile {
@@ -88,6 +94,12 @@ resource "azurerm_kubernetes_cluster_node_pool" "user" {
   os_disk_size_gb       = 128
   max_pods              = 110
   tags                  = var.tags
+
+  upgrade_settings {
+    drain_timeout_in_minutes      = 0
+    max_surge                     = "10%"
+    node_soak_duration_in_minutes = 0
+  }
 
   node_labels = {
     workload = "application"

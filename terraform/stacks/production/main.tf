@@ -116,6 +116,14 @@ module "aks" {
   tags                            = local.common_tags
 }
 
+resource "azurerm_role_assignment" "aks_rbac_cluster_admin" {
+  for_each = setunion(var.aks_rbac_cluster_admin_object_ids, [data.azurerm_client_config.current.object_id])
+
+  scope                = module.aks.cluster_id
+  role_definition_name = "Azure Kubernetes Service RBAC Cluster Admin"
+  principal_id         = each.value
+}
+
 module "workload_identity" {
   source = "../../modules/workload-identity"
 

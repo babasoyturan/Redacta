@@ -146,3 +146,9 @@ variable "sql_administrator_login_password" {
   description = "Production SQL administrator password supplied from secure automation."
   sensitive   = true
 }
+
+variable "aks_rbac_cluster_admin_object_ids" {
+  type        = set(string)
+  description = "Additional Microsoft Entra object IDs granted AKS RBAC cluster admin access."
+  default     = []
+}
