@@ -39,7 +39,6 @@ resource "azurerm_mssql_database" "databases" {
   elastic_pool_id      = azurerm_mssql_elasticpool.this.id
   max_size_gb          = 2
   collation            = "SQL_Latin1_General_CP1_CI_AS"
-  geo_backup_enabled   = false
   storage_account_type = "Local"
   tags                 = var.tags
 
