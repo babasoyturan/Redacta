@@ -22,3 +22,8 @@ output "kubelet_identity_object_id" {
   description = "Kubelet identity object ID."
   value       = azurerm_kubernetes_cluster.this.kubelet_identity[0].object_id
 }
+
+output "ingress_application_gateway_identity_object_id" {
+  description = "Object ID of the managed identity used by the Application Gateway Ingress Controller add-on."
+  value       = azurerm_kubernetes_cluster.this.ingress_application_gateway[0].ingress_application_gateway_identity[0].object_id
+}

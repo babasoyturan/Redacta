@@ -124,6 +124,18 @@ resource "azurerm_role_assignment" "aks_rbac_cluster_admin" {
   principal_id         = each.value
 }
 
+resource "azurerm_role_assignment" "agic_resource_group_reader" {
+  scope                = azurerm_resource_group.production.id
+  role_definition_name = "Reader"
+  principal_id         = module.aks.ingress_application_gateway_identity_object_id
+}
+
+resource "azurerm_role_assignment" "agic_application_gateway_contributor" {
+  scope                = module.application_gateway.application_gateway_id
+  role_definition_name = "Contributor"
+  principal_id         = module.aks.ingress_application_gateway_identity_object_id
+}
+
 module "workload_identity" {
   source = "../../modules/workload-identity"
 
