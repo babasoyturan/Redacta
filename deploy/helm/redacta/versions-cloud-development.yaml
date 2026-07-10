@@ -1,24 +1,24 @@
 frontend:
   image:
     repository: acrredacta7t9.azurecr.io/redacta-frontend
-    tag: replace-me
+    tag: ac8b569
 
 documentService:
   image:
     repository: acrredacta7t9.azurecr.io/redacta-document-service
-    tag: replace-me
+    tag: ac8b569
 
 authenticationService:
   image:
     repository: acrredacta7t9.azurecr.io/redacta-authentication-service
-    tag: replace-me
+    tag: ac8b569
 
 anonymizationService:
   image:
     repository: acrredacta7t9.azurecr.io/redacta-anonymization-service
-    tag: replace-me
+    tag: ac8b569
 
 genaiService:
   image:
     repository: acrredacta7t9.azurecr.io/redacta-genai-service
-    tag: replace-me
+    tag: ac8b569
