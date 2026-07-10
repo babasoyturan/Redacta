@@ -13,7 +13,6 @@ on:
       - "deploy/helm/redacta/values-cloud-production.yaml"
       - "deploy/helm/redacta/versions-cloud-development.yaml"
       - "deploy/helm/redacta/versions-cloud-production.yaml"
-      - "deploy/helm/redacta/values.example.yaml"
       - "deploy/helm/redacta/templates/**"
       - ".github/workflows/backend-ci-cd.yml"
       - "scripts/update-versions.mjs"
@@ -29,7 +28,6 @@ on:
       - "deploy/helm/redacta/values-cloud-production.yaml"
       - "deploy/helm/redacta/versions-cloud-development.yaml"
       - "deploy/helm/redacta/versions-cloud-production.yaml"
-      - "deploy/helm/redacta/values.example.yaml"
       - "deploy/helm/redacta/templates/**"
       - ".github/workflows/backend-ci-cd.yml"
       - "scripts/update-versions.mjs"
@@ -103,7 +101,7 @@ jobs:
             anonymization=true
           fi
 
-          if grep -qE '^deploy/helm/redacta/(Chart\.yaml|values\.yaml|values-cloud-development\.yaml|values-cloud-production\.yaml|versions-cloud-development\.yaml|versions-cloud-production\.yaml|values\.example\.yaml|templates/)' /tmp/backend-changed-files.txt; then
+          if grep -qE '^deploy/helm/redacta/(Chart\.yaml|values\.yaml|values-cloud-development\.yaml|values-cloud-production\.yaml|versions-cloud-development\.yaml|versions-cloud-production\.yaml|templates/)' /tmp/backend-changed-files.txt; then
             helm=true
           fi
 

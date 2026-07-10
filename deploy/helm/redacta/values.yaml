@@ -29,7 +29,7 @@ documentService:
   service:
     port: 8091
   storageLocation: /tmp/redacta-uploads
-  databaseUrl: jdbc:postgresql://postgres:5432/redacta_documents
+  databaseUrl: jdbc:sqlserver://replace-sql-server.database.windows.net:1433;database=documentdb;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;
   jwtIssuerUri: http://keycloak:8080/realms/oopsops
   resources:
     requests:
@@ -47,7 +47,7 @@ authenticationService:
     pullPolicy: ""
   service:
     port: 8092
-  databaseUrl: jdbc:postgresql://postgres:5432/redacta_authentication
+  databaseUrl: jdbc:sqlserver://replace-sql-server.database.windows.net:1433;database=authdb;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;
   resources:
     requests:
       cpu: 100m
@@ -64,7 +64,7 @@ anonymizationService:
     pullPolicy: ""
   service:
     port: 8094
-  databaseUrl: jdbc:postgresql://postgres:5432/redacta_anonymization
+  databaseUrl: jdbc:sqlserver://replace-sql-server.database.windows.net:1433;database=anonymizationdb;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;
   jwtIssuerUri: http://keycloak:8080/realms/oopsops
   resources:
     requests:
@@ -206,6 +206,6 @@ secrets:
 
 ingress:
   enabled: true
-  className: traefik
-  host: redacta.local
+  className: azure-application-gateway
+  host: redacta.example.com
   annotations: {}
