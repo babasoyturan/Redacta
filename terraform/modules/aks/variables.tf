@@ -62,6 +62,19 @@ variable "dns_service_ip" {
   description = "AKS DNS service IP from the service CIDR."
 }
 
+variable "log_analytics_workspace_id" {
+  type        = string
+  description = "Log Analytics workspace ID used by AKS Container Insights."
+  default     = null
+  nullable    = true
+}
+
+variable "managed_prometheus_enabled" {
+  type        = bool
+  description = "Enable AKS managed metrics collection."
+  default     = true
+}
+
 variable "system_node_vm_size" {
   type        = string
   description = "VM size for the system node pool."

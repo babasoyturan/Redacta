@@ -47,6 +47,21 @@ resource "azurerm_kubernetes_cluster" "this" {
     secret_rotation_enabled = true
   }
 
+  dynamic "oms_agent" {
+    for_each = var.log_analytics_workspace_id == null || trimspace(var.log_analytics_workspace_id) == "" ? [] : [var.log_analytics_workspace_id]
+
+    content {
+      log_analytics_workspace_id      = oms_agent.value
+      msi_auth_for_monitoring_enabled = true
+    }
+  }
+
+  dynamic "monitor_metrics" {
+    for_each = var.managed_prometheus_enabled ? [1] : []
+
+    content {}
+  }
+
   network_profile {
     network_plugin      = "azure"
     network_plugin_mode = "overlay"

@@ -43,6 +43,15 @@ module "application_gateway" {
   tags                = local.common_tags
 }
 
+module "observability" {
+  source = "../../modules/observability"
+
+  name_prefix         = var.name_prefix
+  location            = azurerm_resource_group.production.location
+  resource_group_name = azurerm_resource_group.production.name
+  tags                = local.common_tags
+}
+
 module "aks" {
   source = "../../modules/aks"
 
@@ -57,6 +66,7 @@ module "aks" {
   pod_cidr                        = var.pod_cidr
   service_cidr                    = var.service_cidr
   dns_service_ip                  = var.dns_service_ip
+  log_analytics_workspace_id      = module.observability.log_analytics_workspace_id
   system_node_count               = var.system_node_count
   system_node_min_count           = var.system_node_min_count
   system_node_max_count           = var.system_node_max_count

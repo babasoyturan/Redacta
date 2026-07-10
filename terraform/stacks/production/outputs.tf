@@ -30,3 +30,8 @@ output "aks_oidc_issuer_url" {
   description = "Production AKS OIDC issuer URL."
   value       = module.aks.oidc_issuer_url
 }
+
+output "managed_grafana_endpoint" {
+  description = "Production Managed Grafana endpoint."
+  value       = module.observability.managed_grafana_endpoint
+}
