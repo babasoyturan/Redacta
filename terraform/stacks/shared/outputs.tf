@@ -11,9 +11,9 @@ output "acr_login_server" {
 }
 
 output "dns_zone_name" {
-  value = azurerm_dns_zone.shared.name
+  value = try(azurerm_dns_zone.shared[0].name, null)
 }
 
 output "dns_zone_name_servers" {
-  value = azurerm_dns_zone.shared.name_servers
+  value = try(azurerm_dns_zone.shared[0].name_servers, null)
 }

@@ -15,6 +15,8 @@ resource "azurerm_container_registry" "shared" {
 }
 
 resource "azurerm_dns_zone" "shared" {
+  count = var.dns_zone_name == null || trimspace(var.dns_zone_name) == "" ? 0 : 1
+
   name                = var.dns_zone_name
   resource_group_name = azurerm_resource_group.shared.name
   tags                = local.common_tags

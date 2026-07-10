@@ -35,6 +35,8 @@ variable "acr_sku" {
 variable "dns_zone_name" {
   type        = string
   description = "Public DNS zone name managed in the shared stack."
+  default     = null
+  nullable    = true
 }
 
 variable "tags" {
