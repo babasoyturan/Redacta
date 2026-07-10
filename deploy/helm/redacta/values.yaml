@@ -111,6 +111,44 @@ monitoring:
     interval: 15s
     scrapeTimeout: 10s
 
+serviceAccount:
+  create: false
+  name: ""
+  annotations: {}
+  components:
+    documentService: ""
+    authenticationService: ""
+    anonymizationService: ""
+    genaiService: ""
+
+workloadIdentity:
+  enabled: false
+  clientId: ""
+  clientIds:
+    documentService: ""
+    authenticationService: ""
+    anonymizationService: ""
+    genaiService: ""
+
+keyVault:
+  csi:
+    enabled: false
+    secretProviderClassName: redacta-keyvault-secrets
+    secretProviderClassNames:
+      documentService: redacta-document-service-keyvault-secrets
+      authenticationService: redacta-authentication-service-keyvault-secrets
+      anonymizationService: redacta-anonymization-service-keyvault-secrets
+      genaiService: redacta-genai-service-keyvault-secrets
+    vaultName: ""
+    tenantId: ""
+    objects:
+      datasourceUsername: datasource-username
+      datasourcePassword: datasource-password
+      keycloakClientSecret: keycloak-client-secret
+      keycloakAdminUsername: keycloak-admin-username
+      keycloakAdminPassword: keycloak-admin-password
+      openaiApiKey: openai-api-key
+
 keycloak:
   authServerUrl: http://keycloak:8080
   realm: oopsops
@@ -120,6 +158,11 @@ keycloak:
 secrets:
   create: false
   name: redacta-app-secrets
+  names:
+    documentService: ""
+    authenticationService: ""
+    anonymizationService: ""
+    genaiService: ""
   values:
     datasourceUsername: ""
     datasourcePassword: ""

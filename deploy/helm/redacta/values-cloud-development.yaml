@@ -1,0 +1,88 @@
+global:
+  imagePullPolicy: IfNotPresent
+
+spring:
+  profile: cloud
+
+frontend:
+  image:
+    repository: acrredacta7t9.azurecr.io/redacta-frontend
+    tag: replace-me
+  replicaCount: 1
+
+documentService:
+  image:
+    repository: acrredacta7t9.azurecr.io/redacta-document-service
+    tag: replace-me
+  replicaCount: 1
+  storageLocation: /mnt/redacta-documents
+  databaseUrl: jdbc:sqlserver://replace-sql-server.database.windows.net:1433;database=documentdb;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;
+  jwtIssuerUri: https://dev.redacta.example.com/realms/oopsops
+
+authenticationService:
+  image:
+    repository: acrredacta7t9.azurecr.io/redacta-authentication-service
+    tag: replace-me
+  replicaCount: 1
+  databaseUrl: jdbc:sqlserver://replace-sql-server.database.windows.net:1433;database=authdb;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;
+
+anonymizationService:
+  image:
+    repository: acrredacta7t9.azurecr.io/redacta-anonymization-service
+    tag: replace-me
+  replicaCount: 1
+  databaseUrl: jdbc:sqlserver://replace-sql-server.database.windows.net:1433;database=anonymizationdb;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;
+  jwtIssuerUri: https://dev.redacta.example.com/realms/oopsops
+
+genaiService:
+  image:
+    repository: acrredacta7t9.azurecr.io/redacta-genai-service
+    tag: replace-me
+  replicaCount: 1
+  localFallback: false
+
+serviceAccount:
+  create: true
+  components:
+    documentService: redacta-document-service
+    authenticationService: redacta-authentication-service
+    anonymizationService: redacta-anonymization-service
+    genaiService: redacta-genai-service
+
+workloadIdentity:
+  enabled: true
+  clientIds:
+    documentService: replace-document-service-workload-identity-client-id
+    authenticationService: replace-authentication-service-workload-identity-client-id
+    anonymizationService: replace-anonymization-service-workload-identity-client-id
+    genaiService: replace-genai-service-workload-identity-client-id
+
+keyVault:
+  csi:
+    enabled: true
+    vaultName: replace-key-vault-name
+    tenantId: 84f58ce9-43c8-4932-b908-591a8a3007d3
+
+secrets:
+  create: false
+  name: redacta-app-secrets
+  names:
+    documentService: redacta-document-service-secrets
+    authenticationService: redacta-authentication-service-secrets
+    anonymizationService: redacta-anonymization-service-secrets
+    genaiService: redacta-genai-service-secrets
+
+ingress:
+  enabled: true
+  className: azure-application-gateway
+  host: dev.redacta.example.com
+  annotations:
+    kubernetes.io/ingress.class: azure/application-gateway
+    appgw.ingress.kubernetes.io/use-private-ip: "false"
+
+autoscaling:
+  enabled: false
+
+monitoring:
+  serviceMonitor:
+    enabled: false

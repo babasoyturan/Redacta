@@ -18,7 +18,11 @@ spec:
       labels:
         {{- include "redacta.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: document-service
+        {{- include "redacta.workloadIdentityLabels" . | nindent 8 }}
     spec:
+      {{- if or .Values.serviceAccount.create .Values.serviceAccount.name (index .Values.serviceAccount.components "documentService") }}
+      serviceAccountName: {{ include "redacta.componentServiceAccountName" (dict "root" . "component" "documentService") }}
+      {{- end }}
       containers:
         - name: document-service
           image: "{{ .Values.documentService.image.repository }}:{{ .Values.documentService.image.tag }}"
@@ -34,17 +38,18 @@ spec:
             - name: SPRING_DATASOURCE_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.secrets.name }}
+                  name: {{ include "redacta.componentSecretName" (dict "root" . "component" "documentService") }}
                   key: datasource-username
             - name: SPRING_DATASOURCE_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.secrets.name }}
+                  name: {{ include "redacta.componentSecretName" (dict "root" . "component" "documentService") }}
                   key: datasource-password
             - name: STORAGE_LOCATION
               value: {{ .Values.documentService.storageLocation | quote }}
             - name: SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI
               value: {{ .Values.documentService.jwtIssuerUri | quote }}
+          {{- include "redacta.secretVolumeMounts" . | nindent 10 }}
           readinessProbe:
             httpGet:
               path: /actuator/health
@@ -68,6 +73,7 @@ spec:
             failureThreshold: 18
           resources:
             {{- toYaml .Values.documentService.resources | nindent 12 }}
+      {{- include "redacta.secretVolumes" (dict "root" . "component" "documentService") | nindent 6 }}
 ---
 apiVersion: v1
 kind: Service
