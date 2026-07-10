@@ -16,6 +16,7 @@ resource "azurerm_mssql_elasticpool" "this" {
   location            = var.location
   server_name         = azurerm_mssql_server.this.name
   license_type        = "LicenseIncluded"
+  max_size_gb         = var.elastic_pool_max_size_gb
   tags                = var.tags
 
   sku {

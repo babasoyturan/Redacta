@@ -57,6 +57,12 @@ variable "elastic_pool_capacity" {
   default     = 50
 }
 
+variable "elastic_pool_max_size_gb" {
+  type        = number
+  description = "Maximum storage size for the SQL elastic pool."
+  default     = 4.8828125
+}
+
 variable "per_database_min_capacity" {
   type        = number
   description = "Minimum DTU capacity per database."
