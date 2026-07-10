@@ -1,6 +1,7 @@
 variable "location" {
   type        = string
   description = "Azure region for shared resources."
+  default     = "swedencentral"
 }
 
 variable "resource_group_name" {
@@ -12,6 +13,7 @@ variable "resource_group_name" {
 variable "acr_name" {
   type        = string
   description = "Globally unique Azure Container Registry name."
+  default     = "acrredacta7t9"
 
   validation {
     condition     = can(regex("^[a-zA-Z0-9]{5,50}$", var.acr_name))
