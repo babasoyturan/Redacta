@@ -16,6 +16,15 @@ documentService:
     tag: replace-me
   replicaCount: 1
   storageLocation: /mnt/redacta-documents
+  persistence:
+    enabled: true
+    storageClassName: azurefile-csi
+    size: 20Gi
+    shareName: redacta-documents
+    resourceGroupName: rg-redacta-production
+    storageAccountName: stredactaprod7t9
+    secretName: redacta-azure-files-secret
+    reclaimPolicy: Retain
   databaseUrl: jdbc:sqlserver://replace-sql-server.database.windows.net:1433;database=documentdb;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;
   jwtIssuerUri: https://redacta.example.com/realms/oopsops
 

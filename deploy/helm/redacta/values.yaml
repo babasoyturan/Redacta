@@ -29,6 +29,15 @@ documentService:
   service:
     port: 8091
   storageLocation: /tmp/redacta-uploads
+  persistence:
+    enabled: false
+    storageClassName: azurefile-csi
+    size: 20Gi
+    shareName: redacta-documents
+    resourceGroupName: ""
+    storageAccountName: ""
+    secretName: redacta-azure-files-secret
+    reclaimPolicy: Retain
   databaseUrl: jdbc:sqlserver://replace-sql-server.database.windows.net:1433;database=documentdb;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;
   jwtIssuerUri: http://keycloak:8080/realms/oopsops
   resources:
