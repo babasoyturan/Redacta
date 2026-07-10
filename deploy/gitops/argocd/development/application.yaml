@@ -1,25 +1,24 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: redacta-app-local
+  name: redacta-development
   namespace: argocd
-  annotations:
-    argocd.argoproj.io/sync-wave: "2"
 spec:
-  project: redacta-local
+  project: redacta-development
   source:
     repoURL: git@github.com:babasoyturan/Redacta.git
-    targetRevision: main
+    targetRevision: dev
     path: deploy/helm/redacta
     helm:
       releaseName: redacta
       valueFiles:
-        - values-gitops-local.yaml
-        - versions.yaml
+        - values-cloud-development.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: redacta
   syncPolicy:
-    automated: {}
+    automated:
+      prune: true
+      selfHeal: true
     syncOptions:
       - CreateNamespace=true
