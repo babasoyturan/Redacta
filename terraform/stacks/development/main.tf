@@ -52,6 +52,33 @@ module "observability" {
   tags                = local.common_tags
 }
 
+module "key_vault" {
+  source = "../../modules/key-vault"
+
+  name_prefix                = var.name_prefix
+  location                   = azurerm_resource_group.development.location
+  resource_group_name        = azurerm_resource_group.development.name
+  tenant_id                  = data.azurerm_client_config.current.tenant_id
+  admin_object_id            = data.azurerm_client_config.current.object_id
+  virtual_network_id         = module.network.virtual_network_id
+  private_endpoint_subnet_id = module.network.private_endpoint_subnet_id
+  admin_ip_rules             = var.api_server_authorized_ip_ranges
+  tags                       = local.common_tags
+}
+
+module "storage" {
+  source = "../../modules/storage"
+
+  name_prefix                = var.name_prefix
+  location                   = azurerm_resource_group.development.location
+  resource_group_name        = azurerm_resource_group.development.name
+  storage_account_name       = var.storage_account_name
+  virtual_network_id         = module.network.virtual_network_id
+  private_endpoint_subnet_id = module.network.private_endpoint_subnet_id
+  admin_ip_rules             = var.api_server_authorized_ip_ranges
+  tags                       = local.common_tags
+}
+
 module "aks" {
   source = "../../modules/aks"
 

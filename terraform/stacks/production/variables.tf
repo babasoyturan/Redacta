@@ -49,13 +49,13 @@ variable "private_endpoint_subnet_address_prefixes" {
 variable "application_gateway_min_capacity" {
   type        = number
   description = "Production Application Gateway minimum autoscale capacity."
-  default     = 1
+  default     = 0
 }
 
 variable "application_gateway_max_capacity" {
   type        = number
   description = "Production Application Gateway maximum autoscale capacity."
-  default     = 4
+  default     = 2
 }
 
 variable "tfstate_storage_account_name" {
@@ -90,35 +90,41 @@ variable "dns_service_ip" {
 variable "system_node_count" {
   type        = number
   description = "Production system node initial count."
-  default     = 2
+  default     = 1
 }
 
 variable "system_node_min_count" {
   type        = number
   description = "Production system node minimum count."
-  default     = 2
+  default     = 1
 }
 
 variable "system_node_max_count" {
   type        = number
   description = "Production system node maximum count."
-  default     = 3
+  default     = 1
 }
 
 variable "user_node_count" {
   type        = number
   description = "Production user node initial count."
-  default     = 2
+  default     = 1
 }
 
 variable "user_node_min_count" {
   type        = number
   description = "Production user node minimum count."
-  default     = 2
+  default     = 1
 }
 
 variable "user_node_max_count" {
   type        = number
   description = "Production user node maximum count."
-  default     = 4
+  default     = 1
+}
+
+variable "storage_account_name" {
+  type        = string
+  description = "Production storage account name."
+  default     = "stredactaprod7t9"
 }

@@ -78,7 +78,7 @@ variable "managed_prometheus_enabled" {
 variable "system_node_vm_size" {
   type        = string
   description = "VM size for the system node pool."
-  default     = "Standard_D2s_v3"
+  default     = "Standard_B2als_v2"
 }
 
 variable "system_node_count" {
@@ -99,7 +99,7 @@ variable "system_node_max_count" {
 variable "user_node_vm_size" {
   type        = string
   description = "VM size for the user node pool."
-  default     = "Standard_D2s_v3"
+  default     = "Standard_B2als_v2"
 }
 
 variable "user_node_count" {

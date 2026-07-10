@@ -102,7 +102,7 @@ variable "system_node_min_count" {
 variable "system_node_max_count" {
   type        = number
   description = "Development system node maximum count."
-  default     = 2
+  default     = 1
 }
 
 variable "user_node_count" {
@@ -120,5 +120,11 @@ variable "user_node_min_count" {
 variable "user_node_max_count" {
   type        = number
   description = "Development user node maximum count."
-  default     = 2
+  default     = 1
+}
+
+variable "storage_account_name" {
+  type        = string
+  description = "Development storage account name."
+  default     = "stredactadev7t9"
 }

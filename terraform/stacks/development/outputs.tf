@@ -35,3 +35,13 @@ output "managed_grafana_endpoint" {
   description = "Development Managed Grafana endpoint."
   value       = module.observability.managed_grafana_endpoint
 }
+
+output "key_vault_uri" {
+  description = "Development Key Vault URI."
+  value       = module.key_vault.key_vault_uri
+}
+
+output "documents_storage_account_name" {
+  description = "Development documents storage account name."
+  value       = module.storage.storage_account_name
+}
