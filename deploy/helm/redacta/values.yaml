@@ -120,6 +120,7 @@ serviceAccount:
     authenticationService: ""
     anonymizationService: ""
     genaiService: ""
+    keycloak: ""
 
 workloadIdentity:
   enabled: false
@@ -129,6 +130,7 @@ workloadIdentity:
     authenticationService: ""
     anonymizationService: ""
     genaiService: ""
+    keycloak: ""
 
 keyVault:
   csi:
@@ -139,6 +141,7 @@ keyVault:
       authenticationService: redacta-authentication-service-keyvault-secrets
       anonymizationService: redacta-anonymization-service-keyvault-secrets
       genaiService: redacta-genai-service-keyvault-secrets
+      keycloak: redacta-keycloak-keyvault-secrets
     vaultName: ""
     tenantId: ""
     objects:
@@ -147,13 +150,42 @@ keyVault:
       keycloakClientSecret: keycloak-client-secret
       keycloakAdminUsername: keycloak-admin-username
       keycloakAdminPassword: keycloak-admin-password
+      keycloakDbUsername: keycloak-db-username
+      keycloakDbPassword: keycloak-db-password
       openaiApiKey: openai-api-key
 
 keycloak:
+  enabled: false
+  image:
+    repository: quay.io/keycloak/keycloak
+    tag: 22.0.3
+    pullPolicy: ""
+  replicaCount: 1
+  service:
+    name: keycloak
+    port: 8080
+  database:
+    vendor: mssql
+    url: ""
+    usernameSecretKey: keycloak-db-username
+    passwordSecretKey: keycloak-db-password
+  admin:
+    usernameSecretKey: keycloak-admin-username
+    passwordSecretKey: keycloak-admin-password
+  hostnameStrict: false
+  httpEnabled: true
+  proxy: edge
   authServerUrl: http://keycloak:8080
   realm: oopsops
   clientId: oopsops-backend
   adminClientId: admin-cli
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      cpu: 750m
+      memory: 1Gi
 
 secrets:
   create: false
@@ -163,6 +195,7 @@ secrets:
     authenticationService: ""
     anonymizationService: ""
     genaiService: ""
+    keycloak: ""
   values:
     datasourceUsername: ""
     datasourcePassword: ""

@@ -41,6 +41,13 @@ genaiService:
   replicaCount: 1
   localFallback: false
 
+keycloak:
+  enabled: true
+  authServerUrl: http://keycloak:8080
+  database:
+    vendor: mssql
+    url: jdbc:sqlserver://replace-sql-server.database.windows.net:1433;database=keycloakdb;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;
+
 serviceAccount:
   create: true
   components:
@@ -48,6 +55,7 @@ serviceAccount:
     authenticationService: redacta-authentication-service
     anonymizationService: redacta-anonymization-service
     genaiService: redacta-genai-service
+    keycloak: redacta-keycloak
 
 workloadIdentity:
   enabled: true
@@ -56,6 +64,7 @@ workloadIdentity:
     authenticationService: replace-authentication-service-workload-identity-client-id
     anonymizationService: replace-anonymization-service-workload-identity-client-id
     genaiService: replace-genai-service-workload-identity-client-id
+    keycloak: replace-keycloak-workload-identity-client-id
 
 keyVault:
   csi:
@@ -71,6 +80,7 @@ secrets:
     authenticationService: redacta-authentication-service-secrets
     anonymizationService: redacta-anonymization-service-secrets
     genaiService: redacta-genai-service-secrets
+    keycloak: redacta-keycloak-secrets
 
 ingress:
   enabled: true

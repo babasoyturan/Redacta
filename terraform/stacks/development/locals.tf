@@ -28,5 +28,9 @@ locals {
       name_suffix          = "genai-service"
       service_account_name = "redacta-genai-service"
     }
+    keycloak = {
+      name_suffix          = "keycloak"
+      service_account_name = "redacta-keycloak"
+    }
   }
 }
