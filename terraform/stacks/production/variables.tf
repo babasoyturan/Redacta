@@ -57,3 +57,68 @@ variable "application_gateway_max_capacity" {
   description = "Production Application Gateway maximum autoscale capacity."
   default     = 4
 }
+
+variable "tfstate_storage_account_name" {
+  type        = string
+  description = "Terraform state storage account used for cross-stack outputs."
+  default     = "stredactatfstate7t9"
+}
+
+variable "api_server_authorized_ip_ranges" {
+  type        = list(string)
+  description = "CIDR ranges allowed to access the production AKS API server."
+}
+
+variable "pod_cidr" {
+  type        = string
+  description = "Production AKS overlay pod CIDR."
+  default     = "10.245.0.0/16"
+}
+
+variable "service_cidr" {
+  type        = string
+  description = "Production AKS service CIDR."
+  default     = "10.31.0.0/16"
+}
+
+variable "dns_service_ip" {
+  type        = string
+  description = "Production AKS DNS service IP."
+  default     = "10.31.0.10"
+}
+
+variable "system_node_count" {
+  type        = number
+  description = "Production system node initial count."
+  default     = 2
+}
+
+variable "system_node_min_count" {
+  type        = number
+  description = "Production system node minimum count."
+  default     = 2
+}
+
+variable "system_node_max_count" {
+  type        = number
+  description = "Production system node maximum count."
+  default     = 3
+}
+
+variable "user_node_count" {
+  type        = number
+  description = "Production user node initial count."
+  default     = 2
+}
+
+variable "user_node_min_count" {
+  type        = number
+  description = "Production user node minimum count."
+  default     = 2
+}
+
+variable "user_node_max_count" {
+  type        = number
+  description = "Production user node maximum count."
+  default     = 4
+}

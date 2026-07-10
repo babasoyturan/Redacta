@@ -20,3 +20,13 @@ output "application_gateway_public_ip_address" {
   description = "Development Application Gateway public IP address."
   value       = module.application_gateway.public_ip_address
 }
+
+output "aks_cluster_name" {
+  description = "Development AKS cluster name."
+  value       = module.aks.cluster_name
+}
+
+output "aks_oidc_issuer_url" {
+  description = "Development AKS OIDC issuer URL."
+  value       = module.aks.oidc_issuer_url
+}

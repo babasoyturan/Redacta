@@ -1,3 +1,16 @@
+data "azurerm_client_config" "current" {}
+
+data "terraform_remote_state" "shared" {
+  backend = "azurerm"
+
+  config = {
+    resource_group_name  = "rg-redacta-tfstate"
+    storage_account_name = var.tfstate_storage_account_name
+    container_name       = "tfstate"
+    key                  = "shared/terraform.tfstate"
+  }
+}
+
 resource "azurerm_resource_group" "development" {
   name     = var.resource_group_name
   location = var.location
@@ -28,4 +41,27 @@ module "application_gateway" {
   min_capacity        = var.application_gateway_min_capacity
   max_capacity        = var.application_gateway_max_capacity
   tags                = local.common_tags
+}
+
+module "aks" {
+  source = "../../modules/aks"
+
+  name_prefix                     = var.name_prefix
+  location                        = azurerm_resource_group.development.location
+  resource_group_name             = azurerm_resource_group.development.name
+  tenant_id                       = data.azurerm_client_config.current.tenant_id
+  aks_subnet_id                   = module.network.aks_subnet_id
+  application_gateway_id          = module.application_gateway.application_gateway_id
+  acr_id                          = data.terraform_remote_state.shared.outputs.acr_id
+  api_server_authorized_ip_ranges = var.api_server_authorized_ip_ranges
+  pod_cidr                        = var.pod_cidr
+  service_cidr                    = var.service_cidr
+  dns_service_ip                  = var.dns_service_ip
+  system_node_count               = var.system_node_count
+  system_node_min_count           = var.system_node_min_count
+  system_node_max_count           = var.system_node_max_count
+  user_node_count                 = var.user_node_count
+  user_node_min_count             = var.user_node_min_count
+  user_node_max_count             = var.user_node_max_count
+  tags                            = local.common_tags
 }

@@ -57,3 +57,68 @@ variable "application_gateway_max_capacity" {
   description = "Development Application Gateway maximum autoscale capacity."
   default     = 2
 }
+
+variable "tfstate_storage_account_name" {
+  type        = string
+  description = "Terraform state storage account used for cross-stack outputs."
+  default     = "stredactatfstate7t9"
+}
+
+variable "api_server_authorized_ip_ranges" {
+  type        = list(string)
+  description = "CIDR ranges allowed to access the development AKS API server."
+}
+
+variable "pod_cidr" {
+  type        = string
+  description = "Development AKS overlay pod CIDR."
+  default     = "10.244.0.0/16"
+}
+
+variable "service_cidr" {
+  type        = string
+  description = "Development AKS service CIDR."
+  default     = "10.21.0.0/16"
+}
+
+variable "dns_service_ip" {
+  type        = string
+  description = "Development AKS DNS service IP."
+  default     = "10.21.0.10"
+}
+
+variable "system_node_count" {
+  type        = number
+  description = "Development system node initial count."
+  default     = 1
+}
+
+variable "system_node_min_count" {
+  type        = number
+  description = "Development system node minimum count."
+  default     = 1
+}
+
+variable "system_node_max_count" {
+  type        = number
+  description = "Development system node maximum count."
+  default     = 2
+}
+
+variable "user_node_count" {
+  type        = number
+  description = "Development user node initial count."
+  default     = 1
+}
+
+variable "user_node_min_count" {
+  type        = number
+  description = "Development user node minimum count."
+  default     = 1
+}
+
+variable "user_node_max_count" {
+  type        = number
+  description = "Development user node maximum count."
+  default     = 2
+}
