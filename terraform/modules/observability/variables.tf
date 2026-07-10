@@ -25,6 +25,12 @@ variable "daily_quota_gb" {
   default     = 1
 }
 
+variable "grafana_major_version" {
+  type        = number
+  description = "Managed Grafana major version supported by Azure for the selected SKU."
+  default     = 12
+}
+
 variable "tags" {
   type        = map(string)
   description = "Tags applied to observability resources."
