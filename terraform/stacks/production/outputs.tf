@@ -45,3 +45,8 @@ output "documents_storage_account_name" {
   description = "Production documents storage account name."
   value       = module.storage.storage_account_name
 }
+
+output "sql_server_fqdn" {
+  description = "Production SQL server FQDN."
+  value       = module.sql.sql_server_fqdn
+}

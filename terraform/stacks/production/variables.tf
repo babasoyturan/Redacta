@@ -128,3 +128,15 @@ variable "storage_account_name" {
   description = "Production storage account name."
   default     = "stredactaprod7t9"
 }
+
+variable "sql_server_name" {
+  type        = string
+  description = "Production Azure SQL logical server name."
+  default     = "sql-redacta-prod-7t9"
+}
+
+variable "sql_administrator_login_password" {
+  type        = string
+  description = "Production SQL administrator password supplied from secure automation."
+  sensitive   = true
+}

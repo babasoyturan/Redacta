@@ -128,3 +128,15 @@ variable "storage_account_name" {
   description = "Development storage account name."
   default     = "stredactadev7t9"
 }
+
+variable "sql_server_name" {
+  type        = string
+  description = "Development Azure SQL logical server name."
+  default     = "sql-redacta-dev-7t9"
+}
+
+variable "sql_administrator_login_password" {
+  type        = string
+  description = "Development SQL administrator password supplied from secure automation."
+  sensitive   = true
+}

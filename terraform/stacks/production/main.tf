@@ -79,6 +79,19 @@ module "storage" {
   tags                       = local.common_tags
 }
 
+module "sql" {
+  source = "../../modules/sql"
+
+  name_prefix                  = var.name_prefix
+  location                     = azurerm_resource_group.production.location
+  resource_group_name          = azurerm_resource_group.production.name
+  sql_server_name              = var.sql_server_name
+  administrator_login_password = var.sql_administrator_login_password
+  virtual_network_id           = module.network.virtual_network_id
+  private_endpoint_subnet_id   = module.network.private_endpoint_subnet_id
+  tags                         = local.common_tags
+}
+
 module "aks" {
   source = "../../modules/aks"
 

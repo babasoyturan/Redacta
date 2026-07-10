@@ -100,6 +100,7 @@ jobs:
       TF_VAR_dns_zone_name: ${{ vars.DNS_ZONE_NAME }}
       TF_VAR_tfstate_storage_account_name: ${{ vars.TFSTATE_STORAGE_ACCOUNT_NAME }}
       TF_VAR_api_server_authorized_ip_ranges: ${{ vars.AKS_API_SERVER_AUTHORIZED_IP_RANGES }}
+      TF_VAR_sql_administrator_login_password: ${{ matrix.stack == 'production' && secrets.SQL_ADMIN_PASSWORD_PRODUCTION || secrets.SQL_ADMIN_PASSWORD_DEVELOPMENT }}
     steps:
       - name: Skip non-selected workflow dispatch stacks
         if: github.event_name == 'workflow_dispatch' && inputs.stack != matrix.stack
@@ -151,7 +152,7 @@ jobs:
               fi
             done
           else
-            for value in "$TF_VAR_api_server_authorized_ip_ranges"; do
+            for value in "$TF_VAR_api_server_authorized_ip_ranges" "$TF_VAR_sql_administrator_login_password"; do
               if [ -z "$value" ]; then
                 missing=true
               fi
@@ -265,6 +266,7 @@ jobs:
       TF_VAR_location: ${{ vars.AZURE_LOCATION }}
       TF_VAR_tfstate_storage_account_name: ${{ vars.TFSTATE_STORAGE_ACCOUNT_NAME }}
       TF_VAR_api_server_authorized_ip_ranges: ${{ vars.AKS_API_SERVER_AUTHORIZED_IP_RANGES }}
+      TF_VAR_sql_administrator_login_password: ${{ secrets.SQL_ADMIN_PASSWORD_DEVELOPMENT }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -280,7 +282,7 @@ jobs:
         run: |
           set -euo pipefail
           missing=false
-          for value in "$AZURE_CLIENT_ID_TERRAFORM_DEVELOPMENT" "$AZURE_TENANT_ID" "$AZURE_SUBSCRIPTION_ID" "$TFSTATE_STORAGE_ACCOUNT_NAME" "$AZURE_LOCATION" "$TF_VAR_api_server_authorized_ip_ranges"; do
+          for value in "$AZURE_CLIENT_ID_TERRAFORM_DEVELOPMENT" "$AZURE_TENANT_ID" "$AZURE_SUBSCRIPTION_ID" "$TFSTATE_STORAGE_ACCOUNT_NAME" "$AZURE_LOCATION" "$TF_VAR_api_server_authorized_ip_ranges" "$TF_VAR_sql_administrator_login_password"; do
             if [ -z "$value" ]; then
               missing=true
             fi
@@ -327,6 +329,7 @@ jobs:
       TF_VAR_location: ${{ vars.AZURE_LOCATION }}
       TF_VAR_tfstate_storage_account_name: ${{ vars.TFSTATE_STORAGE_ACCOUNT_NAME }}
       TF_VAR_api_server_authorized_ip_ranges: ${{ vars.AKS_API_SERVER_AUTHORIZED_IP_RANGES }}
+      TF_VAR_sql_administrator_login_password: ${{ secrets.SQL_ADMIN_PASSWORD_PRODUCTION }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -342,7 +345,7 @@ jobs:
         run: |
           set -euo pipefail
           missing=false
-          for value in "$AZURE_CLIENT_ID_TERRAFORM_PRODUCTION" "$AZURE_TENANT_ID" "$AZURE_SUBSCRIPTION_ID" "$TFSTATE_STORAGE_ACCOUNT_NAME" "$AZURE_LOCATION" "$TF_VAR_api_server_authorized_ip_ranges"; do
+          for value in "$AZURE_CLIENT_ID_TERRAFORM_PRODUCTION" "$AZURE_TENANT_ID" "$AZURE_SUBSCRIPTION_ID" "$TFSTATE_STORAGE_ACCOUNT_NAME" "$AZURE_LOCATION" "$TF_VAR_api_server_authorized_ip_ranges" "$TF_VAR_sql_administrator_login_password"; do
             if [ -z "$value" ]; then
               missing=true
             fi
