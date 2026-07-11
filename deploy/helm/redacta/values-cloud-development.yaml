@@ -107,4 +107,5 @@ autoscaling:
 
 monitoring:
   serviceMonitor:
-    enabled: false
+    enabled: true
+    apiVersion: azmonitoring.coreos.com/v1

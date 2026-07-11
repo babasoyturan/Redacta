@@ -117,6 +117,7 @@ autoscaling:
 monitoring:
   serviceMonitor:
     enabled: false
+    apiVersion: monitoring.coreos.com/v1
     interval: 15s
     scrapeTimeout: 10s
 

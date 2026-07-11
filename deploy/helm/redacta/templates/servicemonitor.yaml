@@ -1,5 +1,5 @@
 {{- if .Values.monitoring.serviceMonitor.enabled }}
-apiVersion: monitoring.coreos.com/v1
+apiVersion: {{ .Values.monitoring.serviceMonitor.apiVersion }}
 kind: ServiceMonitor
 metadata:
   name: {{ include "redacta.fullname" . }}-spring-services
@@ -21,7 +21,7 @@ spec:
       interval: {{ .Values.monitoring.serviceMonitor.interval }}
       scrapeTimeout: {{ .Values.monitoring.serviceMonitor.scrapeTimeout }}
 ---
-apiVersion: monitoring.coreos.com/v1
+apiVersion: {{ .Values.monitoring.serviceMonitor.apiVersion }}
 kind: ServiceMonitor
 metadata:
   name: {{ include "redacta.fullname" . }}-genai-service
