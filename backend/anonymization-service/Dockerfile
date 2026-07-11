@@ -14,6 +14,7 @@ RUN ./gradlew :anonymization-service:bootJar --no-daemon
 
 FROM eclipse-temurin:21-jre-alpine
 
+# Kubernetes runAsNonRoot requires a numeric image user it can verify.
 RUN addgroup -S -g 10001 app && adduser -S -u 10001 -G app app
 WORKDIR /app
 
