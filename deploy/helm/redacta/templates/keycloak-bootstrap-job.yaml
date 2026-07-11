@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ .Values.keycloak.service.name }}-bootstrap
+  name: {{ .Values.keycloak.service.name }}-bootstrap-v2
   labels:
     {{- include "redacta.labels" . | nindent 4 }}
     app.kubernetes.io/component: keycloak-bootstrap
