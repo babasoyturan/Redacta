@@ -14,6 +14,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+# Kubernetes runAsNonRoot requires a numeric image user it can verify.
 RUN groupadd --gid 10001 appuser \
     && useradd --uid 10001 --gid 10001 --create-home --shell /usr/sbin/nologin appuser \
     && chown -R 10001:10001 /app
