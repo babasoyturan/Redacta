@@ -22,7 +22,7 @@ ext {
     lombokVersion = '1.18.30'
     springBootVersion = '3.5.16'
     postgresqlVersion = '42.7.13'
-    mssqlJdbcVersion = '13.2.1.jre11'
+    mssqlJdbcVersion = '13.4.0.jre11'
 }
 
 subprojects {
