@@ -162,6 +162,23 @@ keyVault:
       keycloakDbUsername: keycloak-db-username
       keycloakDbPassword: keycloak-db-password
       openaiApiKey: openai-api-key
+      sqlAdminUsername: sql-admin-username
+      sqlAdminPassword: sql-admin-password
+
+sqlBootstrap:
+  enabled: false
+  image:
+    repository: mcr.microsoft.com/mssql-tools
+    tag: latest
+    pullPolicy: IfNotPresent
+  serverFqdn: replace-sql-server.database.windows.net
+  secretProviderClassName: redacta-sql-bootstrap-keyvault-secrets
+  serviceAccountComponent: keycloak
+  applicationDatabases:
+    - authdb
+    - documentdb
+    - anonymizationdb
+  keycloakDatabase: keycloakdb
 
 keycloak:
   enabled: false

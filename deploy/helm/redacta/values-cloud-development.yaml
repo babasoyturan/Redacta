@@ -81,6 +81,10 @@ keyVault:
     vaultName: kv-redacta-dev-swec
     tenantId: 84f58ce9-43c8-4932-b908-591a8a3007d3
 
+sqlBootstrap:
+  enabled: true
+  serverFqdn: sql-redacta-dev-7t9.database.windows.net
+
 secrets:
   create: false
   name: redacta-app-secrets

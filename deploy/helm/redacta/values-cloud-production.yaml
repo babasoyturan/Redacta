@@ -81,6 +81,10 @@ keyVault:
     vaultName: replace-key-vault-name
     tenantId: 84f58ce9-43c8-4932-b908-591a8a3007d3
 
+sqlBootstrap:
+  enabled: true
+  serverFqdn: replace-sql-server.database.windows.net
+
 secrets:
   create: false
   name: redacta-app-secrets
