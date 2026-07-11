@@ -128,7 +128,7 @@ jobs:
         run: echo "SonarQube Cloud is skipped because SONAR_TOKEN or SONAR_ORGANIZATION is not configured."
 
       - name: Trivy filesystem secret scan
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
           scan-ref: frontend
@@ -137,7 +137,7 @@ jobs:
           format: table
 
       - name: Trivy filesystem vulnerability report
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
           scan-ref: frontend
@@ -216,7 +216,7 @@ jobs:
         run: docker build -t "${IMAGE_REPOSITORY}:${IMAGE_TAG}" frontend
 
       - name: Trivy image scan
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ env.IMAGE_REPOSITORY }}:${{ env.IMAGE_TAG }}
           severity: HIGH,CRITICAL
@@ -224,7 +224,7 @@ jobs:
           format: table
 
       - name: Generate CycloneDX SBOM
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ env.IMAGE_REPOSITORY }}:${{ env.IMAGE_TAG }}
           format: cyclonedx

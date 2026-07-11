@@ -249,7 +249,7 @@ jobs:
         run: echo "SonarQube Cloud is skipped because SONAR_TOKEN or SONAR_ORGANIZATION is not configured."
 
       - name: Trivy backend filesystem secret scan
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
           scan-ref: backend
@@ -258,7 +258,7 @@ jobs:
           format: table
 
       - name: Trivy backend filesystem vulnerability report
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
           scan-ref: backend
@@ -413,7 +413,7 @@ jobs:
 
       - name: Trivy document image scan
         if: needs.detect.outputs.document == 'true'
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ vars.ACR_LOGIN_SERVER }}/redacta-document-service:${{ env.IMAGE_TAG }}
           severity: HIGH,CRITICAL
@@ -422,7 +422,7 @@ jobs:
 
       - name: Trivy authentication image scan
         if: needs.detect.outputs.authentication == 'true'
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ vars.ACR_LOGIN_SERVER }}/redacta-authentication-service:${{ env.IMAGE_TAG }}
           severity: HIGH,CRITICAL
@@ -431,7 +431,7 @@ jobs:
 
       - name: Trivy anonymization image scan
         if: needs.detect.outputs.anonymization == 'true'
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ vars.ACR_LOGIN_SERVER }}/redacta-anonymization-service:${{ env.IMAGE_TAG }}
           severity: HIGH,CRITICAL
@@ -440,7 +440,7 @@ jobs:
 
       - name: Trivy GenAI image scan
         if: needs.detect.outputs.genai == 'true'
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ vars.ACR_LOGIN_SERVER }}/redacta-genai-service:${{ env.IMAGE_TAG }}
           severity: HIGH,CRITICAL
