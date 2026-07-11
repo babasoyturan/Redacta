@@ -70,7 +70,7 @@ def get_chat_llm():
 ANONYMIZATION_SERVICE_URL = os.getenv("ANONYMIZATION_SERVICE_URL")
 
 
-vector_store = VectorStoreManager(persist_directory="./chroma_db")
+vector_store = VectorStoreManager(persist_directory="./document_store")
 conversation_manager = ConversationManager(vector_store)
 
 

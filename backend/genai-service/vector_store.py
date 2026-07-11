@@ -1,116 +1,90 @@
-# ABOUTME: This module manages the vector database for document embeddings and retrieval
-# ABOUTME: It provides functionality to store, search, and retrieve document chunks for RAG
+# ABOUTME: This module manages uploaded document chunks for retrieval.
+# ABOUTME: It avoids an external vector database so the service remains lightweight in Kubernetes.
 
-from typing import List, Dict, Optional, Tuple
-import os
-import chromadb
-from chromadb.config import Settings
-from langchain_chroma import Chroma
-from langchain_openai import OpenAIEmbeddings
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.document_loaders import PyPDFLoader, TextLoader
-from langchain.schema import Document
-import hashlib
+from dataclasses import dataclass, field
 from datetime import datetime
-from local_fallback import uses_local_fallback
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
+import hashlib
+import re
+
+from pypdf import PdfReader
+
+
+@dataclass
+class TextChunk:
+    page_content: str
+    metadata: Dict = field(default_factory=dict)
+
+
+class SimpleRetriever:
+    def __init__(
+        self,
+        vector_store: "VectorStoreManager",
+        k: int,
+        document_ids: Optional[List[str]],
+    ):
+        self.vector_store = vector_store
+        self.k = k
+        self.document_ids = document_ids
+
+    def invoke(self, query: str) -> List[TextChunk]:
+        return self.vector_store.search_documents(
+            query=query, k=self.k, document_ids=self.document_ids
+        )
+
+    def get_relevant_documents(self, query: str) -> List[TextChunk]:
+        return self.invoke(query)
 
 
 class VectorStoreManager:
-    def __init__(self, persist_directory: str = "./chroma_db"):
-        self.persist_directory = persist_directory
-        os.makedirs(persist_directory, exist_ok=True)
-        self.local_fallback = uses_local_fallback()
-        self.local_documents: Dict[str, List[Document]] = {}
-
-        self.collection_name = "documents"
-        self.embeddings = None
-        self.client = None
-        self.vectorstore = None
-
-        if not self.local_fallback:
-            self.embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
-
-            self.client = chromadb.PersistentClient(
-                path=persist_directory,
-                settings=Settings(anonymized_telemetry=False, allow_reset=True),
-            )
-
-            self.vectorstore = Chroma(
-                client=self.client,
-                collection_name=self.collection_name,
-                embedding_function=self.embeddings,
-                persist_directory=persist_directory,
-            )
-
-        self.text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=1000,
-            chunk_overlap=200,
-            length_function=len,
-            separators=["\n\n", "\n", ".", "!", "?", ",", " ", ""],
-        )
-
+    def __init__(self, persist_directory: str = "./document_store"):
+        self.persist_directory = Path(persist_directory)
+        self.persist_directory.mkdir(parents=True, exist_ok=True)
+        self.chunk_size = 1000
+        self.chunk_overlap = 200
+        self.documents: Dict[str, List[TextChunk]] = {}
         self.document_metadata: Dict[str, Dict] = {}
 
     def generate_document_id(self, filename: str, content: bytes) -> str:
-        content_hash = hashlib.md5(content).hexdigest()[:8]
-        return f"{filename}_{content_hash}"
+        content_hash = hashlib.sha256(content).hexdigest()[:12]
+        return f"{Path(filename).stem}_{content_hash}"
 
     def ingest_pdf(
         self, file_path: str, filename: str, document_id: Optional[str] = None
     ) -> Tuple[str, int]:
+        content = Path(file_path).read_bytes()
         if not document_id:
-            with open(file_path, "rb") as f:
-                content = f.read()
             document_id = self.generate_document_id(filename, content)
 
-        loader = PyPDFLoader(file_path)
-        documents = loader.load()
+        reader = PdfReader(file_path)
+        page_chunks: List[TextChunk] = []
 
-        if not documents:
-            raise ValueError(
-                f"No content could be extracted from PDF: {filename}"
-            )
+        for page_number, page in enumerate(reader.pages, start=1):
+            page_text = page.extract_text() or ""
+            if page_text.strip():
+                page_chunks.append(
+                    TextChunk(
+                        page_content=page_text,
+                        metadata={"source": filename, "page": page_number},
+                    )
+                )
 
-        # Filter out empty documents
-        documents = [doc for doc in documents if doc.page_content.strip()]
-
-        if not documents:
+        if not page_chunks:
             raise ValueError(f"PDF contains no readable text: {filename}")
 
-        chunks = self.text_splitter.split_documents(documents)
-
-        # Filter out empty chunks
-        chunks = [chunk for chunk in chunks if chunk.page_content.strip()]
-
+        chunks = self._split_documents(page_chunks)
         if not chunks:
             raise ValueError(
                 f"No text chunks could be created from PDF: {filename}"
             )
 
-        for i, chunk in enumerate(chunks):
-            chunk.metadata.update(
-                {
-                    "document_id": document_id,
-                    "filename": filename,
-                    "chunk_index": i,
-                    "total_chunks": len(chunks),
-                    "upload_time": datetime.utcnow().isoformat(),
-                    "file_type": "pdf",
-                }
-            )
-
-        self.document_metadata[document_id] = {
-            "filename": filename,
-            "file_type": "pdf",
-            "total_chunks": len(chunks),
-            "upload_time": datetime.utcnow().isoformat(),
-        }
-
-        if self.local_fallback:
-            self.local_documents[document_id] = chunks
-        else:
-            self.vectorstore.add_documents(chunks)
-
+        self._store_chunks(
+            document_id=document_id,
+            filename=filename,
+            file_type="pdf",
+            chunks=chunks,
+        )
         return document_id, len(chunks)
 
     def ingest_markdown(
@@ -122,44 +96,17 @@ class VectorStoreManager:
         if not document_id:
             document_id = self.generate_document_id(filename, content.encode())
 
-        doc = Document(page_content=content, metadata={"source": filename})
-        chunks = self.text_splitter.split_documents([doc])
-
-        # Filter out empty chunks
-        chunks = [chunk for chunk in chunks if chunk.page_content.strip()]
-
-        if not chunks:
-            raise ValueError(
-                f"No text chunks could be created from markdown: {filename}"
-            )
-
-        for i, chunk in enumerate(chunks):
-            chunk.metadata.update(
-                {
-                    "document_id": document_id,
-                    "filename": filename,
-                    "chunk_index": i,
-                    "total_chunks": len(chunks),
-                    "upload_time": datetime.utcnow().isoformat(),
-                    "file_type": "markdown",
-                }
-            )
-
-        self.document_metadata[document_id] = {
-            "filename": filename,
-            "file_type": "markdown",
-            "total_chunks": len(chunks),
-            "upload_time": datetime.utcnow().isoformat(),
-        }
-
-        if self.local_fallback:
-            self.local_documents[document_id] = chunks
-        else:
-            self.vectorstore.add_documents(chunks)
-
+        chunks = self._split_text(
+            content, metadata={"source": filename, "file_type": "markdown"}
+        )
+        self._store_chunks(
+            document_id=document_id,
+            filename=filename,
+            file_type="markdown",
+            chunks=chunks,
+        )
         return document_id, len(chunks)
 
-    # New method for ingesting plain text
     def ingest_text(
         self,
         content: str,
@@ -173,78 +120,48 @@ class VectorStoreManager:
         if not document_id:
             document_id = self.generate_document_id(title, content.encode())
 
-        # Create document with additional metadata
-        doc_metadata = {"source": title}
+        doc_metadata = {"source": title, "file_type": "text"}
         if metadata:
             doc_metadata.update(metadata)
 
-        doc = Document(page_content=content, metadata=doc_metadata)
-        chunks = self.text_splitter.split_documents([doc])
-
-        # Filter out empty chunks
-        chunks = [chunk for chunk in chunks if chunk.page_content.strip()]
-
-        if not chunks:
-            raise ValueError(
-                f"No text chunks could be created from text: {title}"
-            )
-
-        for i, chunk in enumerate(chunks):
-            chunk.metadata.update(
-                {
-                    "document_id": document_id,
-                    "filename": title,
-                    "chunk_index": i,
-                    "total_chunks": len(chunks),
-                    "upload_time": datetime.utcnow().isoformat(),
-                    "file_type": "text",
-                }
-            )
-            # Add any additional metadata
-            if metadata:
-                chunk.metadata.update(metadata)
-
-        self.document_metadata[document_id] = {
-            "filename": title,
-            "file_type": "text",
-            "total_chunks": len(chunks),
-            "upload_time": datetime.utcnow().isoformat(),
-            **(metadata or {}),
-        }
-
-        if self.local_fallback:
-            self.local_documents[document_id] = chunks
-        else:
-            self.vectorstore.add_documents(chunks)
-
+        chunks = self._split_text(content, metadata=doc_metadata)
+        self._store_chunks(
+            document_id=document_id,
+            filename=title,
+            file_type="text",
+            chunks=chunks,
+            extra_metadata=metadata,
+        )
         return document_id, len(chunks)
 
     def search_documents(
         self, query: str, k: int = 5, document_ids: Optional[List[str]] = None
-    ) -> List[Document]:
-        if self.local_fallback:
-            selected_ids = document_ids or list(self.local_documents.keys())
-            docs: List[Document] = []
-            for document_id in selected_ids:
-                docs.extend(self.local_documents.get(document_id, []))
-            return docs[:k]
+    ) -> List[TextChunk]:
+        selected_ids = document_ids or list(self.documents.keys())
+        chunks: List[TextChunk] = []
+        for document_id in selected_ids:
+            chunks.extend(self.documents.get(document_id, []))
 
-        search_kwargs = {"k": k}
+        if not chunks:
+            return []
 
-        if document_ids:
-            search_kwargs["filter"] = {"document_id": {"$in": document_ids}}
+        terms = set(re.findall(r"\w+", query.lower()))
+        if not terms:
+            return chunks[:k]
 
-        return self.vectorstore.similarity_search(query, **search_kwargs)
+        scored = []
+        for index, chunk in enumerate(chunks):
+            text = chunk.page_content.lower()
+            score = sum(text.count(term) for term in terms)
+            scored.append((score, index, chunk))
+
+        scored.sort(key=lambda item: (-item[0], item[1]))
+        return [chunk for _, _, chunk in scored[:k]]
 
     def get_retriever(
         self, k: int = 5, document_ids: Optional[List[str]] = None
-    ):
-        search_kwargs = {"k": k}
-
-        if document_ids:
-            search_kwargs["filter"] = {"document_id": {"$in": document_ids}}
-
-        return self.vectorstore.as_retriever(search_kwargs=search_kwargs)
+    ) -> SimpleRetriever:
+        return SimpleRetriever(self, k=k, document_ids=document_ids)
 
     def list_documents(self) -> List[Dict]:
         return [
@@ -253,17 +170,82 @@ class VectorStoreManager:
         ]
 
     def delete_document(self, document_id: str) -> bool:
-        if self.local_fallback:
-            self.local_documents.pop(document_id, None)
-            return self.document_metadata.pop(document_id, None) is not None
+        self.documents.pop(document_id, None)
+        return self.document_metadata.pop(document_id, None) is not None
 
-        try:
-            collection = self.client.get_collection(self.collection_name)
-            collection.delete(where={"document_id": document_id})
+    def _store_chunks(
+        self,
+        document_id: str,
+        filename: str,
+        file_type: str,
+        chunks: List[TextChunk],
+        extra_metadata: Optional[Dict] = None,
+    ) -> None:
+        upload_time = datetime.utcnow().isoformat()
+        total_chunks = len(chunks)
 
-            if document_id in self.document_metadata:
-                del self.document_metadata[document_id]
+        for index, chunk in enumerate(chunks):
+            chunk.metadata.update(
+                {
+                    "document_id": document_id,
+                    "filename": filename,
+                    "chunk_index": index,
+                    "total_chunks": total_chunks,
+                    "upload_time": upload_time,
+                    "file_type": file_type,
+                }
+            )
 
-            return True
-        except Exception:
-            return False
+        self.documents[document_id] = chunks
+        self.document_metadata[document_id] = {
+            "filename": filename,
+            "file_type": file_type,
+            "total_chunks": total_chunks,
+            "upload_time": upload_time,
+            **(extra_metadata or {}),
+        }
+
+    def _split_documents(self, documents: List[TextChunk]) -> List[TextChunk]:
+        chunks: List[TextChunk] = []
+        for document in documents:
+            chunks.extend(
+                self._split_text(document.page_content, metadata=document.metadata)
+            )
+        return chunks
+
+    def _split_text(self, text: str, metadata: Optional[Dict] = None) -> List[TextChunk]:
+        normalized = "\n".join(
+            line.strip() for line in text.splitlines() if line.strip()
+        )
+        if not normalized:
+            return []
+
+        chunks: List[TextChunk] = []
+        start = 0
+
+        while start < len(normalized):
+            end = min(start + self.chunk_size, len(normalized))
+            if end < len(normalized):
+                boundary = max(
+                    normalized.rfind(separator, start, end)
+                    for separator in ("\n\n", "\n", ". ", "! ", "? ", " ")
+                )
+                if boundary > start + self.chunk_size // 2:
+                    end = boundary + 1
+
+            chunk_text = normalized[start:end].strip()
+            if chunk_text:
+                chunks.append(
+                    TextChunk(
+                        page_content=chunk_text,
+                        metadata=dict(metadata or {}),
+                    )
+                )
+
+            if end >= len(normalized):
+                break
+
+            next_start = max(end - self.chunk_overlap, 0)
+            start = next_start if next_start > start else end
+
+        return chunks

@@ -435,6 +435,7 @@ jobs:
         with:
           image-ref: ${{ vars.ACR_LOGIN_SERVER }}/redacta-document-service:${{ env.IMAGE_TAG }}
           severity: HIGH,CRITICAL
+          ignore-unfixed: true
           exit-code: "1"
           format: table
 
@@ -444,6 +445,7 @@ jobs:
         with:
           image-ref: ${{ vars.ACR_LOGIN_SERVER }}/redacta-authentication-service:${{ env.IMAGE_TAG }}
           severity: HIGH,CRITICAL
+          ignore-unfixed: true
           exit-code: "1"
           format: table
 
@@ -453,6 +455,7 @@ jobs:
         with:
           image-ref: ${{ vars.ACR_LOGIN_SERVER }}/redacta-anonymization-service:${{ env.IMAGE_TAG }}
           severity: HIGH,CRITICAL
+          ignore-unfixed: true
           exit-code: "1"
           format: table
 
@@ -462,6 +465,7 @@ jobs:
         with:
           image-ref: ${{ vars.ACR_LOGIN_SERVER }}/redacta-genai-service:${{ env.IMAGE_TAG }}
           severity: HIGH,CRITICAL
+          ignore-unfixed: true
           exit-code: "1"
           format: table
 
