@@ -26,7 +26,7 @@ documentService:
     secretName: redacta-azure-files-secret
     reclaimPolicy: Retain
   databaseUrl: jdbc:sqlserver://sql-redacta-dev-7t9.database.windows.net:1433;database=documentdb;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;
-  jwtIssuerUri: https://dev.redacta.example.com/realms/oopsops
+  jwtIssuerUri: http://keycloak:8080/realms/oopsops
 
 authenticationService:
   image:
@@ -41,7 +41,7 @@ anonymizationService:
     tag: replace-me
   replicaCount: 1
   databaseUrl: jdbc:sqlserver://sql-redacta-dev-7t9.database.windows.net:1433;database=anonymizationdb;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;
-  jwtIssuerUri: https://dev.redacta.example.com/realms/oopsops
+  jwtIssuerUri: http://keycloak:8080/realms/oopsops
 
 genaiService:
   image:
