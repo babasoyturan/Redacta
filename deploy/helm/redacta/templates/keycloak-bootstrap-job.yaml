@@ -50,12 +50,15 @@ spec:
                 "$KCADM" create roles -r "$KEYCLOAK_REALM" -s name="$KEYCLOAK_ROLE"
               fi
 
-              CLIENT_UUID="$("$KCADM" get clients \
-                -r "$KEYCLOAK_REALM" \
-                -q clientId="$KEYCLOAK_CLIENT_ID" \
-                --fields id \
-                --format csv \
-                --noquotes 2>/dev/null | tail -n +2 | head -n 1 || true)"
+              get_client_uuid() {
+                "$KCADM" get clients \
+                  -r "$KEYCLOAK_REALM" \
+                  -q clientId="$KEYCLOAK_CLIENT_ID" 2>/dev/null \
+                  | sed -n 's/.*"id" *: *"\([^"]*\)".*/\1/p' \
+                  | head -n 1
+              }
+
+              CLIENT_UUID="$(get_client_uuid || true)"
 
               if [ -z "$CLIENT_UUID" ]; then
                 "$KCADM" create clients -r "$KEYCLOAK_REALM" \
@@ -68,26 +71,26 @@ spec:
                   -s directAccessGrantsEnabled=true \
                   -s standardFlowEnabled=true \
                   -s fullScopeAllowed=true \
-                  -s secret="$KEYCLOAK_CLIENT_SECRET"
+                  -s secret="$KEYCLOAK_CLIENT_SECRET" || true
 
-                CLIENT_UUID="$("$KCADM" get clients \
-                  -r "$KEYCLOAK_REALM" \
-                  -q clientId="$KEYCLOAK_CLIENT_ID" \
-                  --fields id \
-                  --format csv \
-                  --noquotes | tail -n +2 | head -n 1)"
-              else
-                "$KCADM" update "clients/$CLIENT_UUID" -r "$KEYCLOAK_REALM" \
-                  -s enabled=true \
-                  -s protocol=openid-connect \
-                  -s publicClient=false \
-                  -s clientAuthenticatorType=client-secret \
-                  -s serviceAccountsEnabled=true \
-                  -s directAccessGrantsEnabled=true \
-                  -s standardFlowEnabled=true \
-                  -s fullScopeAllowed=true \
-                  -s secret="$KEYCLOAK_CLIENT_SECRET"
+                CLIENT_UUID="$(get_client_uuid || true)"
               fi
+
+              if [ -z "$CLIENT_UUID" ]; then
+                echo "Unable to resolve Keycloak client UUID for $KEYCLOAK_CLIENT_ID"
+                exit 1
+              fi
+
+              "$KCADM" update "clients/$CLIENT_UUID" -r "$KEYCLOAK_REALM" \
+                -s enabled=true \
+                -s protocol=openid-connect \
+                -s publicClient=false \
+                -s clientAuthenticatorType=client-secret \
+                -s serviceAccountsEnabled=true \
+                -s directAccessGrantsEnabled=true \
+                -s standardFlowEnabled=true \
+                -s fullScopeAllowed=true \
+                -s secret="$KEYCLOAK_CLIENT_SECRET"
 
               "$KCADM" add-roles -r "$KEYCLOAK_REALM" \
                 --uusername "service-account-$KEYCLOAK_CLIENT_ID" \
