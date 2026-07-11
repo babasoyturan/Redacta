@@ -39,6 +39,27 @@ variable "dns_zone_name" {
   nullable    = true
 }
 
+variable "github_actions_repository" {
+  type        = string
+  description = "GitHub repository allowed to publish Redacta images to ACR with OIDC."
+  default     = "babasoyturan/Redacta"
+
+  validation {
+    condition     = can(regex("^[^/]+/[^/]+$", var.github_actions_repository))
+    error_message = "GitHub repository must use the owner/name format."
+  }
+}
+
+variable "github_actions_environments" {
+  type        = map(string)
+  description = "GitHub deployment environments allowed to use the shared ACR push identity."
+
+  default = {
+    development = "development-infrastructure"
+    production  = "production-infrastructure"
+  }
+}
+
 variable "tags" {
   type        = map(string)
   description = "Additional tags applied to shared resources."

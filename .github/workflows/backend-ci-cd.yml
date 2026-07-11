@@ -34,7 +34,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   id-token: write
 
 concurrency:
@@ -354,16 +354,14 @@ jobs:
           AZURE_CLIENT_ID_ACR_PUSH: ${{ vars.AZURE_CLIENT_ID_ACR_PUSH }}
           AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
           AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
-          GITOPS_APP_ID: ${{ vars.GITOPS_APP_ID }}
-          GITOPS_APP_PRIVATE_KEY: ${{ secrets.GITOPS_APP_PRIVATE_KEY }}
         run: |
           set -euo pipefail
 
-          if [ -n "$ACR_NAME" ] && [ -n "$ACR_LOGIN_SERVER" ] && [ -n "$AZURE_CLIENT_ID_ACR_PUSH" ] && [ -n "$AZURE_TENANT_ID" ] && [ -n "$AZURE_SUBSCRIPTION_ID" ] && [ -n "$GITOPS_APP_ID" ] && [ -n "$GITOPS_APP_PRIVATE_KEY" ]; then
+          if [ -n "$ACR_NAME" ] && [ -n "$ACR_LOGIN_SERVER" ] && [ -n "$AZURE_CLIENT_ID_ACR_PUSH" ] && [ -n "$AZURE_TENANT_ID" ] && [ -n "$AZURE_SUBSCRIPTION_ID" ]; then
             echo "can_publish=true" >> "$GITHUB_OUTPUT"
           else
             echo "can_publish=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::Backend publish is skipped because ACR, Azure OIDC, or GitOps bot configuration is missing."
+            echo "::notice::Backend publish is skipped because ACR or Azure OIDC configuration is missing."
           fi
 
   publish:
@@ -504,17 +502,9 @@ jobs:
       group: redacta-gitops-writeback
       cancel-in-progress: false
     steps:
-      - name: Generate GitHub App token
-        id: app-token
-        uses: actions/create-github-app-token@v1
-        with:
-          app-id: ${{ vars.GITOPS_APP_ID }}
-          private-key: ${{ secrets.GITOPS_APP_PRIVATE_KEY }}
-
-      - name: Checkout with GitOps bot token
+      - name: Checkout for GitOps writeback
         uses: actions/checkout@v4
         with:
-          token: ${{ steps.app-token.outputs.token }}
           fetch-depth: 0
 
       - name: Download backend version updates
