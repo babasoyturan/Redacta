@@ -342,11 +342,8 @@ jobs:
       needs.detect.outputs.backend_any == 'true' &&
       !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled')
-    outputs:
-      can_publish: ${{ steps.check.outputs.can_publish }}
     steps:
       - name: Check required publish credentials
-        id: check
         shell: bash
         env:
           ACR_NAME: ${{ vars.ACR_NAME }}
@@ -357,12 +354,19 @@ jobs:
         run: |
           set -euo pipefail
 
-          if [ -n "$ACR_NAME" ] && [ -n "$ACR_LOGIN_SERVER" ] && [ -n "$AZURE_CLIENT_ID_ACR_PUSH" ] && [ -n "$AZURE_TENANT_ID" ] && [ -n "$AZURE_SUBSCRIPTION_ID" ]; then
-            echo "can_publish=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "can_publish=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::Backend publish is skipped because ACR or Azure OIDC configuration is missing."
+          missing=()
+          [ -n "$ACR_NAME" ] || missing+=("ACR_NAME")
+          [ -n "$ACR_LOGIN_SERVER" ] || missing+=("ACR_LOGIN_SERVER")
+          [ -n "$AZURE_CLIENT_ID_ACR_PUSH" ] || missing+=("AZURE_CLIENT_ID_ACR_PUSH")
+          [ -n "$AZURE_TENANT_ID" ] || missing+=("AZURE_TENANT_ID")
+          [ -n "$AZURE_SUBSCRIPTION_ID" ] || missing+=("AZURE_SUBSCRIPTION_ID")
+
+          if [ "${#missing[@]}" -gt 0 ]; then
+            printf '::error::Backend publish credentials are missing: %s\n' "${missing[*]}"
+            exit 1
           fi
+
+          echo "Backend publish credentials are configured."
 
   publish:
     name: Build, scan, and publish affected backend images
@@ -371,7 +375,12 @@ jobs:
     needs:
       - detect
       - publish-config
-    if: needs.publish-config.outputs.can_publish == 'true'
+    if: |
+      always() &&
+      github.event_name == 'push' &&
+      (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') &&
+      needs.detect.outputs.backend_any == 'true' &&
+      needs.publish-config.result == 'success'
     env:
       IMAGE_TAG: ${{ needs.detect.outputs.short_sha }}-${{ github.run_number }}-${{ github.run_attempt }}
       ACR_NAME: ${{ vars.ACR_NAME }}
