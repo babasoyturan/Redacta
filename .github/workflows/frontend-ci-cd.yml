@@ -73,7 +73,7 @@ jobs:
 
           git diff --name-only "$base" "$head" | tee /tmp/frontend-changed-files.txt
 
-          if grep -qE '^frontend/' /tmp/frontend-changed-files.txt || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          if grep -qE '^(frontend/|\.github/workflows/frontend-ci-cd\.yml$|scripts/update-versions\.mjs$)' /tmp/frontend-changed-files.txt || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "frontend_changed=true" >> "$GITHUB_OUTPUT"
           else
             echo "frontend_changed=false" >> "$GITHUB_OUTPUT"
@@ -149,6 +149,7 @@ jobs:
   publish-config:
     name: Check frontend publish credentials
     runs-on: ubuntu-latest
+    environment: ${{ github.ref_name == 'main' && 'production-infrastructure' || 'development-infrastructure' }}
     needs:
       - detect
       - validate
@@ -180,6 +181,7 @@ jobs:
   publish:
     name: Build, scan, and publish frontend image
     runs-on: ubuntu-latest
+    environment: ${{ github.ref_name == 'main' && 'production-infrastructure' || 'development-infrastructure' }}
     needs:
       - detect
       - validate
@@ -243,6 +245,7 @@ jobs:
   update-gitops:
     name: Update frontend GitOps version
     runs-on: ubuntu-latest
+    environment: ${{ github.ref_name == 'main' && 'production-infrastructure' || 'development-infrastructure' }}
     needs:
       - publish
     if: needs.publish.result == 'success'
