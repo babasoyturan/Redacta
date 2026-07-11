@@ -8,6 +8,8 @@ metadata:
     app.kubernetes.io/component: keycloak
 spec:
   replicas: {{ .Values.keycloak.replicaCount }}
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       {{- include "redacta.selectorLabels" . | nindent 6 }}
@@ -67,11 +69,18 @@ spec:
             - name: KC_TRANSACTION_XA_ENABLED
               value: {{ .Values.keycloak.transactionXaEnabled | quote }}
           {{- include "redacta.secretVolumeMounts" . | nindent 10 }}
+          startupProbe:
+            httpGet:
+              path: /realms/master
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 30
           readinessProbe:
             httpGet:
               path: /realms/master
               port: http
-            initialDelaySeconds: 30
+            initialDelaySeconds: 10
             periodSeconds: 10
             timeoutSeconds: 3
             failureThreshold: 12
@@ -79,7 +88,7 @@ spec:
             httpGet:
               path: /realms/master
               port: http
-            initialDelaySeconds: 60
+            initialDelaySeconds: 180
             periodSeconds: 20
             timeoutSeconds: 3
             failureThreshold: 3
