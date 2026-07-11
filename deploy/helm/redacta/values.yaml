@@ -184,10 +184,15 @@ keycloak:
   hostnameStrict: false
   httpEnabled: true
   proxy: edge
+  transactionXaEnabled: false
   authServerUrl: http://keycloak:8080
   realm: oopsops
   clientId: oopsops-backend
   adminClientId: admin-cli
+  bootstrap:
+    enabled: true
+    roleName: user
+    serviceAccountRole: manage-users
   resources:
     requests:
       cpu: 100m

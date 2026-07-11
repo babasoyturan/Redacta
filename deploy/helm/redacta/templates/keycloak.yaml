@@ -64,6 +64,8 @@ spec:
               value: {{ .Values.keycloak.hostnameStrict | quote }}
             - name: KC_PROXY
               value: {{ .Values.keycloak.proxy | quote }}
+            - name: KC_TRANSACTION_XA_ENABLED
+              value: {{ .Values.keycloak.transactionXaEnabled | quote }}
           {{- include "redacta.secretVolumeMounts" . | nindent 10 }}
           readinessProbe:
             httpGet:
