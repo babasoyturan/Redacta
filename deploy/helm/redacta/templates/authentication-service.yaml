@@ -27,6 +27,7 @@ spec:
         - name: authentication-service
           image: "{{ .Values.authenticationService.image.repository }}:{{ .Values.authenticationService.image.tag }}"
           imagePullPolicy: {{ default .Values.global.imagePullPolicy .Values.authenticationService.image.pullPolicy }}
+          {{- include "redacta.defaultContainerSecurityContext" . | nindent 10 }}
           ports:
             - name: http
               containerPort: {{ .Values.authenticationService.service.port }}

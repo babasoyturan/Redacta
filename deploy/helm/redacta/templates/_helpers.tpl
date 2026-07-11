@@ -129,3 +129,14 @@ volumes:
         secretProviderClass: {{ include "redacta.secretProviderClassName" . | quote }}
 {{- end }}
 {{- end -}}
+
+{{- define "redacta.defaultContainerSecurityContext" -}}
+securityContext:
+  runAsNonRoot: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  seccompProfile:
+    type: RuntimeDefault
+{{- end -}}

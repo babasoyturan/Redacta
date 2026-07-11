@@ -23,6 +23,7 @@ spec:
         - name: frontend
           image: "{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}"
           imagePullPolicy: {{ default .Values.global.imagePullPolicy .Values.frontend.image.pullPolicy }}
+          {{- include "redacta.defaultContainerSecurityContext" . | nindent 10 }}
           ports:
             - name: http
               containerPort: {{ .Values.frontend.service.port }}

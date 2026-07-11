@@ -27,6 +27,7 @@ spec:
         - name: anonymization-service
           image: "{{ .Values.anonymizationService.image.repository }}:{{ .Values.anonymizationService.image.tag }}"
           imagePullPolicy: {{ default .Values.global.imagePullPolicy .Values.anonymizationService.image.pullPolicy }}
+          {{- include "redacta.defaultContainerSecurityContext" . | nindent 10 }}
           ports:
             - name: http
               containerPort: {{ .Values.anonymizationService.service.port }}

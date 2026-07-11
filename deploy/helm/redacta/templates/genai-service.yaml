@@ -31,6 +31,7 @@ spec:
         - name: genai-service
           image: "{{ .Values.genaiService.image.repository }}:{{ .Values.genaiService.image.tag }}"
           imagePullPolicy: {{ default .Values.global.imagePullPolicy .Values.genaiService.image.pullPolicy }}
+          {{- include "redacta.defaultContainerSecurityContext" . | nindent 10 }}
           ports:
             - name: http
               containerPort: {{ .Values.genaiService.service.port }}

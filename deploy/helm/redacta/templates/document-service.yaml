@@ -27,6 +27,7 @@ spec:
         - name: document-service
           image: "{{ .Values.documentService.image.repository }}:{{ .Values.documentService.image.tag }}"
           imagePullPolicy: {{ default .Values.global.imagePullPolicy .Values.documentService.image.pullPolicy }}
+          {{- include "redacta.defaultContainerSecurityContext" . | nindent 10 }}
           ports:
             - name: http
               containerPort: {{ .Values.documentService.service.port }}
