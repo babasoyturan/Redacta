@@ -506,7 +506,9 @@ jobs:
     environment: ${{ github.ref_name == 'main' && 'production-infrastructure' || 'development-infrastructure' }}
     needs:
       - publish
-    if: needs.publish.result == 'success'
+    if: |
+      always() &&
+      needs.publish.result == 'success'
     concurrency:
       group: redacta-gitops-writeback
       cancel-in-progress: false
