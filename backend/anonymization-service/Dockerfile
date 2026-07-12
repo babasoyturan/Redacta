@@ -7,7 +7,7 @@ COPY gradle ./gradle
 COPY document-service/build.gradle document-service/build.gradle
 COPY authentication-service/build.gradle authentication-service/build.gradle
 COPY anonymization-service/build.gradle anonymization-service/build.gradle
-RUN chmod +x gradlew
+RUN sed -i 's/\r$//' gradlew && chmod +x gradlew
 
 COPY anonymization-service/src anonymization-service/src
 RUN ./gradlew :anonymization-service:bootJar --no-daemon
