@@ -236,6 +236,19 @@ ingress:
   host: ${options.host}
   annotations:
     appgw.ingress.kubernetes.io/use-private-ip: "false"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  tls:
+    enabled: true
+    secretName: redacta-tls
+
+certManager:
+  clusterIssuer:
+    enabled: true
+    name: letsencrypt-prod
+    email: admin@redacta.site
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretName: redacta-letsencrypt-prod-account-key
+    ingressClassName: azure-application-gateway
 
 autoscaling:
   enabled: false

@@ -241,3 +241,15 @@ ingress:
   className: azure-application-gateway
   host: redacta.site
   annotations: {}
+  tls:
+    enabled: false
+    secretName: redacta-tls
+
+certManager:
+  clusterIssuer:
+    enabled: false
+    name: letsencrypt-prod
+    email: admin@redacta.site
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretName: redacta-letsencrypt-prod-account-key
+    ingressClassName: azure-application-gateway
