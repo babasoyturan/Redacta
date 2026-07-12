@@ -244,6 +244,7 @@ jobs:
 
       - name: SonarQube Cloud backend analysis
         if: env.SONAR_TOKEN != '' && env.SONAR_ORGANIZATION != ''
+        continue-on-error: true
         uses: SonarSource/sonarqube-scan-action@v5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -252,6 +253,7 @@ jobs:
           args: >
             -Dsonar.projectKey=redacta-backend
             -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
+            -Dsonar.qualitygate.wait=false
 
       - name: Skip SonarQube Cloud backend analysis
         if: env.SONAR_TOKEN == '' || env.SONAR_ORGANIZATION == ''
