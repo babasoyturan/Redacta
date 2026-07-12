@@ -36,3 +36,18 @@ output "github_actions_federated_subjects" {
   description = "GitHub OIDC subjects allowed to use the ACR push identity."
   value       = local.github_actions_federated_subjects
 }
+
+output "github_actions_terraform_client_ids" {
+  description = "Client IDs used by GitHub Actions OIDC jobs to run Terraform."
+  value       = { for key, identity in azurerm_user_assigned_identity.github_actions_terraform : key => identity.client_id }
+}
+
+output "github_actions_terraform_principal_ids" {
+  description = "Principal IDs used by GitHub Actions OIDC jobs to run Terraform."
+  value       = { for key, identity in azurerm_user_assigned_identity.github_actions_terraform : key => identity.principal_id }
+}
+
+output "github_actions_terraform_subjects" {
+  description = "GitHub OIDC subjects allowed to use the Terraform identities."
+  value       = local.github_actions_terraform_subjects
+}

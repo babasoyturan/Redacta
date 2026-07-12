@@ -39,6 +39,30 @@ variable "dns_zone_name" {
   nullable    = true
 }
 
+variable "tfstate_resource_group_name" {
+  type        = string
+  description = "Resource group that contains the Terraform state storage account."
+  default     = "rg-redacta-tfstate"
+}
+
+variable "tfstate_storage_account_name" {
+  type        = string
+  description = "Terraform state storage account used by CI/CD infrastructure jobs."
+  default     = "stredactatfstate7t9"
+}
+
+variable "development_resource_group_name" {
+  type        = string
+  description = "Development resource group managed by the development Terraform CI/CD identity."
+  default     = "rg-redacta-development"
+}
+
+variable "production_resource_group_name" {
+  type        = string
+  description = "Production resource group managed by the production Terraform CI/CD identity."
+  default     = "rg-redacta-production"
+}
+
 variable "github_actions_repository" {
   type        = string
   description = "GitHub repository allowed to publish Redacta images to ACR with OIDC."
