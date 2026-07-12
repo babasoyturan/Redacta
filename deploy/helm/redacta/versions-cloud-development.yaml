@@ -6,19 +6,19 @@ frontend:
 documentService:
   image:
     repository: acrredacta7t9.azurecr.io/redacta-document-service
-    tag: ac8b569
+    tag: 1dc557e-31-1
 
 authenticationService:
   image:
     repository: acrredacta7t9.azurecr.io/redacta-authentication-service
-    tag: ac8b569
+    tag: 1dc557e-31-1
 
 anonymizationService:
   image:
     repository: acrredacta7t9.azurecr.io/redacta-anonymization-service
-    tag: ac8b569
+    tag: 1dc557e-31-1
 
 genaiService:
   image:
     repository: acrredacta7t9.azurecr.io/redacta-genai-service
-    tag: ac8b569
+    tag: 1dc557e-31-1
