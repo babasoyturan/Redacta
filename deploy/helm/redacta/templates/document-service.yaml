@@ -9,6 +9,7 @@ spec:
   {{- if not (and .Values.autoscaling.enabled .Values.autoscaling.components.documentService) }}
   replicas: {{ .Values.documentService.replicaCount }}
   {{- end }}
+  {{- include "redacta.deploymentStrategy" (dict "root" . "component" "documentService") | nindent 2 }}
   selector:
     matchLabels:
       {{- include "redacta.selectorLabels" . | nindent 6 }}

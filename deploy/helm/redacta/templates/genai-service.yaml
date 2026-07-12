@@ -13,6 +13,7 @@ spec:
   {{- if not (and .Values.autoscaling.enabled .Values.autoscaling.components.genaiService) }}
   replicas: {{ .Values.genaiService.replicaCount }}
   {{- end }}
+  {{- include "redacta.deploymentStrategy" (dict "root" . "component" "genaiService") | nindent 2 }}
   selector:
     matchLabels:
       {{- include "redacta.selectorLabels" . | nindent 6 }}

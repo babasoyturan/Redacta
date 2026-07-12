@@ -9,6 +9,7 @@ spec:
   {{- if not (and .Values.autoscaling.enabled .Values.autoscaling.components.anonymizationService) }}
   replicas: {{ .Values.anonymizationService.replicaCount }}
   {{- end }}
+  {{- include "redacta.deploymentStrategy" (dict "root" . "component" "anonymizationService") | nindent 2 }}
   selector:
     matchLabels:
       {{- include "redacta.selectorLabels" . | nindent 6 }}

@@ -4,6 +4,12 @@ global:
 spring:
   profile: cloud
 
+deploymentStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 0
+    maxUnavailable: 1
+
 frontend:
   image:
     repository: acrredacta7t9.azurecr.io/redacta-frontend

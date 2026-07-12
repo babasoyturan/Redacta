@@ -140,3 +140,15 @@ securityContext:
   seccompProfile:
     type: RuntimeDefault
 {{- end -}}
+
+{{- define "redacta.deploymentStrategy" -}}
+{{- $componentValues := index .root.Values .component | default dict -}}
+{{- $strategy := .root.Values.deploymentStrategy | default dict -}}
+{{- if $componentValues.deploymentStrategy -}}
+{{- $strategy = $componentValues.deploymentStrategy -}}
+{{- end -}}
+{{- if $strategy }}
+strategy:
+{{- toYaml $strategy | nindent 2 }}
+{{- end }}
+{{- end -}}
