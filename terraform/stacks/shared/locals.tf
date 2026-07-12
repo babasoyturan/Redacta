@@ -32,7 +32,4 @@ locals {
     for key, identity in local.github_actions_terraform_identities :
     key => "repo:${var.github_actions_repository}:environment:${identity.environment}"
   }
-
-  development_resource_group_id = "${data.azurerm_subscription.current.id}/resourceGroups/${var.development_resource_group_name}"
-  production_resource_group_id  = "${data.azurerm_subscription.current.id}/resourceGroups/${var.production_resource_group_name}"
 }

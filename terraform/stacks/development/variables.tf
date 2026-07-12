@@ -99,6 +99,12 @@ variable "system_node_count" {
   default     = 1
 }
 
+variable "system_node_vm_size" {
+  type        = string
+  description = "Development system node VM size."
+  default     = "Standard_B2s_v2"
+}
+
 variable "system_node_min_count" {
   type        = number
   description = "Development system node minimum count."
@@ -115,6 +121,12 @@ variable "user_node_count" {
   type        = number
   description = "Development user node initial count."
   default     = 1
+}
+
+variable "user_node_vm_size" {
+  type        = string
+  description = "Development user node VM size."
+  default     = "Standard_B2s_v2"
 }
 
 variable "user_node_min_count" {

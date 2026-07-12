@@ -2,6 +2,14 @@ output "resource_group_name" {
   value = azurerm_resource_group.shared.name
 }
 
+output "development_resource_group_name" {
+  value = azurerm_resource_group.development.name
+}
+
+output "production_resource_group_name" {
+  value = azurerm_resource_group.production.name
+}
+
 output "acr_name" {
   value = azurerm_container_registry.shared.name
 }

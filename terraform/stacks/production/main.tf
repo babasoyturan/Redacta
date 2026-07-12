@@ -105,9 +105,11 @@ module "aks" {
   service_cidr                    = var.service_cidr
   dns_service_ip                  = var.dns_service_ip
   log_analytics_workspace_id      = module.observability.log_analytics_workspace_id
+  system_node_vm_size             = var.system_node_vm_size
   system_node_count               = var.system_node_count
   system_node_min_count           = var.system_node_min_count
   system_node_max_count           = var.system_node_max_count
+  user_node_vm_size               = var.user_node_vm_size
   user_node_count                 = var.user_node_count
   user_node_min_count             = var.user_node_min_count
   user_node_max_count             = var.user_node_max_count
