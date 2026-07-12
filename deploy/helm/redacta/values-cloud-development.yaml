@@ -13,13 +13,13 @@ deploymentStrategy:
 frontend:
   image:
     repository: acrredacta7t9.azurecr.io/redacta-frontend
-    tag: replace-me
+    tag: 1dc557e-17-1
   replicaCount: 1
 
 documentService:
   image:
     repository: acrredacta7t9.azurecr.io/redacta-document-service
-    tag: replace-me
+    tag: 1dc557e-31-1
   replicaCount: 1
   storageLocation: /mnt/redacta-documents
   persistence:
@@ -37,14 +37,14 @@ documentService:
 authenticationService:
   image:
     repository: acrredacta7t9.azurecr.io/redacta-authentication-service
-    tag: replace-me
+    tag: 1dc557e-31-1
   replicaCount: 1
   databaseUrl: jdbc:sqlserver://sql-redacta-dev-7t9.database.windows.net:1433;database=authdb;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;
 
 anonymizationService:
   image:
     repository: acrredacta7t9.azurecr.io/redacta-anonymization-service
-    tag: replace-me
+    tag: 1dc557e-31-1
   replicaCount: 1
   databaseUrl: jdbc:sqlserver://sql-redacta-dev-7t9.database.windows.net:1433;database=anonymizationdb;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;
   jwtIssuerUri: http://keycloak:8080/realms/oopsops
@@ -52,7 +52,7 @@ anonymizationService:
 genaiService:
   image:
     repository: acrredacta7t9.azurecr.io/redacta-genai-service
-    tag: replace-me
+    tag: 1dc557e-31-1
   replicaCount: 1
   localFallback: false
 
