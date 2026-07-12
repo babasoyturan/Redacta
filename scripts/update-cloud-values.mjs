@@ -236,6 +236,7 @@ ingress:
   host: ${options.host}
   annotations:
     appgw.ingress.kubernetes.io/use-private-ip: "false"
+    appgw.ingress.kubernetes.io/ssl-redirect: "true"
     cert-manager.io/cluster-issuer: letsencrypt-prod
   tls:
     enabled: true
