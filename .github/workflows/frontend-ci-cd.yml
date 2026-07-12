@@ -9,8 +9,7 @@ on:
       - "frontend/**"
       - "deploy/helm/redacta/values-cloud-development.yaml"
       - "deploy/helm/redacta/values-cloud-production.yaml"
-      - "deploy/helm/redacta/versions-cloud-development.yaml"
-      - "deploy/helm/redacta/versions-cloud-production.yaml"
+      - "deploy/helm/redacta/versions.yaml"
       - ".github/workflows/frontend-ci-cd.yml"
       - "scripts/update-versions.mjs"
   pull_request:
@@ -21,8 +20,7 @@ on:
       - "frontend/**"
       - "deploy/helm/redacta/values-cloud-development.yaml"
       - "deploy/helm/redacta/values-cloud-production.yaml"
-      - "deploy/helm/redacta/versions-cloud-development.yaml"
-      - "deploy/helm/redacta/versions-cloud-production.yaml"
+      - "deploy/helm/redacta/versions.yaml"
       - ".github/workflows/frontend-ci-cd.yml"
       - "scripts/update-versions.mjs"
   workflow_dispatch:
@@ -155,7 +153,7 @@ jobs:
     needs:
       - detect
       - validate
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') && needs.detect.outputs.frontend_changed == 'true'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev' && needs.detect.outputs.frontend_changed == 'true'
     steps:
       - name: Check required publish credentials
         shell: bash
@@ -193,7 +191,7 @@ jobs:
     if: |
       always() &&
       github.event_name == 'push' &&
-      (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') &&
+      github.ref == 'refs/heads/dev' &&
       needs.detect.outputs.frontend_changed == 'true' &&
       needs.publish-config.result == 'success'
     env:
@@ -271,20 +269,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          case "${GITHUB_REF_NAME}" in
-            dev)
-              target_branch="dev"
-              versions_file="deploy/helm/redacta/versions-cloud-development.yaml"
-              ;;
-            main)
-              target_branch="main"
-              versions_file="deploy/helm/redacta/versions-cloud-production.yaml"
-              ;;
-            *)
-              echo "Unsupported GitOps writeback branch: ${GITHUB_REF_NAME}"
-              exit 1
-              ;;
-          esac
+          target_branch="dev"
+          versions_file="deploy/helm/redacta/versions.yaml"
 
           git fetch origin "$target_branch"
           git checkout "$target_branch"

@@ -11,8 +11,7 @@ on:
       - "deploy/helm/redacta/values.yaml"
       - "deploy/helm/redacta/values-cloud-development.yaml"
       - "deploy/helm/redacta/values-cloud-production.yaml"
-      - "deploy/helm/redacta/versions-cloud-development.yaml"
-      - "deploy/helm/redacta/versions-cloud-production.yaml"
+      - "deploy/helm/redacta/versions.yaml"
       - "deploy/helm/redacta/templates/**"
       - ".github/workflows/backend-ci-cd.yml"
       - "scripts/update-versions.mjs"
@@ -26,8 +25,7 @@ on:
       - "deploy/helm/redacta/values.yaml"
       - "deploy/helm/redacta/values-cloud-development.yaml"
       - "deploy/helm/redacta/values-cloud-production.yaml"
-      - "deploy/helm/redacta/versions-cloud-development.yaml"
-      - "deploy/helm/redacta/versions-cloud-production.yaml"
+      - "deploy/helm/redacta/versions.yaml"
       - "deploy/helm/redacta/templates/**"
       - ".github/workflows/backend-ci-cd.yml"
       - "scripts/update-versions.mjs"
@@ -110,7 +108,7 @@ jobs:
             versions_helper=true
           fi
 
-          if grep -qE '^deploy/helm/redacta/(Chart\.yaml|values\.yaml|values-cloud-development\.yaml|values-cloud-production\.yaml|versions-cloud-development\.yaml|versions-cloud-production\.yaml|templates/)' /tmp/backend-changed-files.txt; then
+          if grep -qE '^deploy/helm/redacta/(Chart\.yaml|values\.yaml|values-cloud-development\.yaml|values-cloud-production\.yaml|versions\.yaml|templates/)' /tmp/backend-changed-files.txt; then
             helm=true
           fi
 
@@ -291,16 +289,16 @@ jobs:
         uses: azure/setup-helm@v4
 
       - name: Helm lint development
-        run: helm lint deploy/helm/redacta -f deploy/helm/redacta/values-cloud-development.yaml -f deploy/helm/redacta/versions-cloud-development.yaml
+        run: helm lint deploy/helm/redacta -f deploy/helm/redacta/values-cloud-development.yaml -f deploy/helm/redacta/versions.yaml
 
       - name: Helm template development
-        run: helm template redacta deploy/helm/redacta -f deploy/helm/redacta/values-cloud-development.yaml -f deploy/helm/redacta/versions-cloud-development.yaml
+        run: helm template redacta deploy/helm/redacta -f deploy/helm/redacta/values-cloud-development.yaml -f deploy/helm/redacta/versions.yaml
 
       - name: Helm lint production
-        run: helm lint deploy/helm/redacta -f deploy/helm/redacta/values-cloud-production.yaml -f deploy/helm/redacta/versions-cloud-production.yaml
+        run: helm lint deploy/helm/redacta -f deploy/helm/redacta/values-cloud-production.yaml -f deploy/helm/redacta/versions.yaml
 
       - name: Helm template production
-        run: helm template redacta deploy/helm/redacta -f deploy/helm/redacta/values-cloud-production.yaml -f deploy/helm/redacta/versions-cloud-production.yaml
+        run: helm template redacta deploy/helm/redacta -f deploy/helm/redacta/values-cloud-production.yaml -f deploy/helm/redacta/versions.yaml
 
   versions-helper-validation:
     name: Validate GitOps version helper
@@ -319,7 +317,7 @@ jobs:
       - name: Validate cloud version update helper
         run: |
           node scripts/update-versions.mjs \
-            --file deploy/helm/redacta/versions-cloud-development.yaml \
+            --file deploy/helm/redacta/versions.yaml \
             frontend=acrredacta7t9.azurecr.io/redacta-frontend:validation \
             documentService=acrredacta7t9.azurecr.io/redacta-document-service:validation \
             authenticationService=acrredacta7t9.azurecr.io/redacta-authentication-service:validation \
@@ -340,7 +338,7 @@ jobs:
     if: |
       always() &&
       github.event_name == 'push' &&
-      (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') &&
+      github.ref == 'refs/heads/dev' &&
       needs.detect.outputs.backend_any == 'true' &&
       !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled')
@@ -380,7 +378,7 @@ jobs:
     if: |
       always() &&
       github.event_name == 'push' &&
-      (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') &&
+      github.ref == 'refs/heads/dev' &&
       needs.detect.outputs.backend_any == 'true' &&
       needs.publish-config.result == 'success'
     env:
@@ -534,20 +532,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          case "${GITHUB_REF_NAME}" in
-            dev)
-              target_branch="dev"
-              versions_file="deploy/helm/redacta/versions-cloud-development.yaml"
-              ;;
-            main)
-              target_branch="main"
-              versions_file="deploy/helm/redacta/versions-cloud-production.yaml"
-              ;;
-            *)
-              echo "Unsupported GitOps writeback branch: ${GITHUB_REF_NAME}"
-              exit 1
-              ;;
-          esac
+          target_branch="dev"
+          versions_file="deploy/helm/redacta/versions.yaml"
 
           git fetch origin "$target_branch"
           git checkout "$target_branch"
