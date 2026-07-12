@@ -1,5 +1,6 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
+from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
 from models import (
     AnonymizeRequest,
     GenAiResponse,
@@ -23,22 +24,54 @@ import os
 import tempfile
 import shutil
 import requests
-import os
-from prometheus_fastapi_instrumentator import Instrumentator
+import time
 
 
 app = FastAPI(title="GenAI Service with RAG", version="1.0.0")
 
-# Initialize the instrumentator
-instrumentator = Instrumentator(
-    should_group_status_codes=False,
-    should_ignore_untemplated=True,
-    should_instrument_requests_inprogress=True,
-    excluded_handlers=[".*admin.*", "/metrics"],
+REQUEST_COUNT = Counter(
+    "genai_http_requests_total",
+    "Total HTTP requests handled by the GenAI service.",
+    ["method", "path", "status"],
+)
+REQUEST_LATENCY = Histogram(
+    "genai_http_request_duration_seconds",
+    "HTTP request latency in seconds for the GenAI service.",
+    ["method", "path"],
 )
 
-# Instrument the app and expose the metrics
-instrumentator.instrument(app).expose(app)
+
+@app.middleware("http")
+async def metrics_middleware(request: Request, call_next):
+    start = time.perf_counter()
+    path = request.url.path
+    try:
+        response = await call_next(request)
+    except Exception:
+        REQUEST_COUNT.labels(
+            method=request.method, path=path, status="500"
+        ).inc()
+        REQUEST_LATENCY.labels(method=request.method, path=path).observe(
+            time.perf_counter() - start
+        )
+        raise
+
+    route = request.scope.get("route")
+    if route and getattr(route, "path", None):
+        path = route.path
+
+    REQUEST_COUNT.labels(
+        method=request.method, path=path, status=str(response.status_code)
+    ).inc()
+    REQUEST_LATENCY.labels(method=request.method, path=path).observe(
+        time.perf_counter() - start
+    )
+    return response
+
+
+@app.get("/metrics", include_in_schema=False)
+def metrics():
+    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 
 # Add error handlers
