@@ -104,7 +104,7 @@ secrets:
 ingress:
   enabled: true
   className: azure-application-gateway
-  host: redacta.example.com
+  host: redacta.site
   annotations:
     appgw.ingress.kubernetes.io/use-private-ip: "false"
 

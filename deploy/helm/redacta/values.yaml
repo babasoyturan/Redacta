@@ -239,5 +239,5 @@ secrets:
 ingress:
   enabled: true
   className: azure-application-gateway
-  host: redacta.example.com
+  host: redacta.site
   annotations: {}

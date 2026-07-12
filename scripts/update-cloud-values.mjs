@@ -21,11 +21,11 @@ const serviceAccounts = {
 const defaults = {
   development: {
     file: "deploy/helm/redacta/values-cloud-development.yaml",
-    host: "dev.redacta.example.com",
+    host: "dev.redacta.site",
   },
   production: {
     file: "deploy/helm/redacta/values-cloud-production.yaml",
-    host: "redacta.example.com",
+    host: "redacta.site",
   },
 };
 

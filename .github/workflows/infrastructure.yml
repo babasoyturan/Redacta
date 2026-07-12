@@ -97,7 +97,7 @@ jobs:
             --file /tmp/redacta-values.yaml \
             --tenant-id 00000000-0000-0000-0000-000000000000 \
             --acr-login-server acrredacta7t9.azurecr.io \
-            --host dev.redacta.example.com
+            --host dev.redacta.site
 
           grep -q "sql-redacta-dev-7t9.database.windows.net" /tmp/redacta-values.yaml
 
@@ -387,7 +387,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          host="${DEVELOPMENT_HOSTNAME:-dev.redacta.example.com}"
+          host="${DEVELOPMENT_HOSTNAME:-dev.redacta.site}"
           node scripts/update-cloud-values.mjs \
             --environment development \
             --outputs-file terraform-output.json \
@@ -503,7 +503,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          host="${PRODUCTION_HOSTNAME:-redacta.example.com}"
+          host="${PRODUCTION_HOSTNAME:-redacta.site}"
           node scripts/update-cloud-values.mjs \
             --environment production \
             --outputs-file terraform-output.json \
