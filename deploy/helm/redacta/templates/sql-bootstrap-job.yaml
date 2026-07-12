@@ -1,0 +1,191 @@
+{{- if and .Values.sqlBootstrap.enabled .Values.keyVault.csi.enabled }}
+{{- $component := .Values.sqlBootstrap.serviceAccountComponent -}}
+apiVersion: secrets-store.csi.x-k8s.io/v1
+kind: SecretProviderClass
+metadata:
+  name: {{ .Values.sqlBootstrap.secretProviderClassName }}
+  labels:
+    {{- include "redacta.labels" . | nindent 4 }}
+    app.kubernetes.io/component: sql-bootstrap
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  provider: azure
+  parameters:
+    usePodIdentity: "false"
+    useVMManagedIdentity: "false"
+    clientID: {{ include "redacta.workloadIdentityClientId" (dict "root" . "component" $component) | quote }}
+    keyvaultName: {{ .Values.keyVault.csi.vaultName | quote }}
+    tenantId: {{ .Values.keyVault.csi.tenantId | quote }}
+    objects: |
+      array:
+        - |
+          objectName: {{ .Values.keyVault.csi.objects.sqlAdminUsername }}
+          objectType: secret
+        - |
+          objectName: {{ .Values.keyVault.csi.objects.sqlAdminPassword }}
+          objectType: secret
+        - |
+          objectName: {{ .Values.keyVault.csi.objects.datasourceUsername }}
+          objectType: secret
+        - |
+          objectName: {{ .Values.keyVault.csi.objects.datasourcePassword }}
+          objectType: secret
+        - |
+          objectName: {{ .Values.keyVault.csi.objects.keycloakDbUsername }}
+          objectType: secret
+        - |
+          objectName: {{ .Values.keyVault.csi.objects.keycloakDbPassword }}
+          objectType: secret
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "redacta.fullname" . }}-sql-bootstrap
+  labels:
+    {{- include "redacta.labels" . | nindent 4 }}
+    app.kubernetes.io/component: sql-bootstrap
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded,HookFailed
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  backoffLimit: 6
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        {{- include "redacta.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: sql-bootstrap
+        {{- include "redacta.workloadIdentityLabels" . | nindent 8 }}
+    spec:
+      restartPolicy: OnFailure
+      serviceAccountName: {{ include "redacta.componentServiceAccountName" (dict "root" . "component" $component) }}
+      containers:
+        - name: sql-bootstrap
+          image: "{{ .Values.sqlBootstrap.image.repository }}:{{ .Values.sqlBootstrap.image.tag }}"
+          imagePullPolicy: {{ default .Values.global.imagePullPolicy .Values.sqlBootstrap.image.pullPolicy }}
+          command:
+            - /bin/bash
+            - -ec
+          args:
+            - |
+              sqlcmd_path="$(command -v sqlcmd || true)"
+              if [ -z "$sqlcmd_path" ] && [ -x /opt/mssql-tools18/bin/sqlcmd ]; then
+                sqlcmd_path=/opt/mssql-tools18/bin/sqlcmd
+              fi
+              if [ -z "$sqlcmd_path" ] && [ -x /opt/mssql-tools/bin/sqlcmd ]; then
+                sqlcmd_path=/opt/mssql-tools/bin/sqlcmd
+              fi
+              if [ -z "$sqlcmd_path" ]; then
+                echo "sqlcmd was not found in the bootstrap image."
+                exit 1
+              fi
+
+              read_secret() {
+                path="/mnt/sql-bootstrap/$1"
+                if [ ! -s "$path" ]; then
+                  echo "Missing Key Vault secret file: $path"
+                  exit 1
+                fi
+                tr -d '\r\n' < "$path"
+              }
+
+              quote_sql_literal() {
+                printf "%s" "$1" | sed "s/'/''/g"
+              }
+
+              sql_admin_user="$(read_secret "{{ .Values.keyVault.csi.objects.sqlAdminUsername }}")"
+              sql_admin_password="$(read_secret "{{ .Values.keyVault.csi.objects.sqlAdminPassword }}")"
+              app_user="$(read_secret "{{ .Values.keyVault.csi.objects.datasourceUsername }}")"
+              app_password="$(read_secret "{{ .Values.keyVault.csi.objects.datasourcePassword }}")"
+              keycloak_user="$(read_secret "{{ .Values.keyVault.csi.objects.keycloakDbUsername }}")"
+              keycloak_password="$(read_secret "{{ .Values.keyVault.csi.objects.keycloakDbPassword }}")"
+              sql_server="tcp:{{ .Values.sqlBootstrap.serverFqdn }},1433"
+
+              run_sql() {
+                database="$1"
+                query="$2"
+                "$sqlcmd_path" -S "$sql_server" -d "$database" -U "$sql_admin_user" -P "$sql_admin_password" -C -b -l 30 -Q "$query"
+              }
+
+              ensure_login() {
+                login_name="$1"
+                login_password="$2"
+                login_literal="$(quote_sql_literal "$login_name")"
+                password_literal="$(quote_sql_literal "$login_password")"
+
+                run_sql master "
+                  DECLARE @login sysname = N'$login_literal';
+                  DECLARE @password nvarchar(256) = N'$password_literal';
+                  IF NOT EXISTS (SELECT 1 FROM sys.sql_logins WHERE name = @login)
+                  BEGIN
+                    DECLARE @create nvarchar(max) =
+                      N'CREATE LOGIN ' + QUOTENAME(@login) +
+                      N' WITH PASSWORD = ' + QUOTENAME(@password, '''') +
+                      N', CHECK_POLICY = OFF';
+                    EXEC(@create);
+                  END
+                  ELSE
+                  BEGIN
+                    DECLARE @alter nvarchar(max) =
+                      N'ALTER LOGIN ' + QUOTENAME(@login) +
+                      N' WITH PASSWORD = ' + QUOTENAME(@password, '''');
+                    EXEC(@alter);
+                  END
+                "
+              }
+
+              ensure_database_user() {
+                database_name="$1"
+                user_name="$2"
+                user_literal="$(quote_sql_literal "$user_name")"
+
+                run_sql "$database_name" "
+                  DECLARE @user sysname = N'$user_literal';
+                  DECLARE @sql nvarchar(max);
+                  IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = @user)
+                  BEGIN
+                    SET @sql = N'CREATE USER ' + QUOTENAME(@user) + N' FOR LOGIN ' + QUOTENAME(@user);
+                    EXEC(@sql);
+                  END
+
+                  IF ISNULL(IS_ROLEMEMBER(N'db_datareader', @user), 0) <> 1
+                  BEGIN
+                    SET @sql = N'ALTER ROLE db_datareader ADD MEMBER ' + QUOTENAME(@user);
+                    EXEC(@sql);
+                  END
+                  IF ISNULL(IS_ROLEMEMBER(N'db_datawriter', @user), 0) <> 1
+                  BEGIN
+                    SET @sql = N'ALTER ROLE db_datawriter ADD MEMBER ' + QUOTENAME(@user);
+                    EXEC(@sql);
+                  END
+                  IF ISNULL(IS_ROLEMEMBER(N'db_ddladmin', @user), 0) <> 1
+                  BEGIN
+                    SET @sql = N'ALTER ROLE db_ddladmin ADD MEMBER ' + QUOTENAME(@user);
+                    EXEC(@sql);
+                  END
+                "
+              }
+
+              ensure_login "$app_user" "$app_password"
+              ensure_login "$keycloak_user" "$keycloak_password"
+
+              {{- range .Values.sqlBootstrap.applicationDatabases }}
+              ensure_database_user "{{ . }}" "$app_user"
+              {{- end }}
+              ensure_database_user "{{ .Values.sqlBootstrap.keycloakDatabase }}" "$keycloak_user"
+          volumeMounts:
+            - name: sql-bootstrap-secrets
+              mountPath: /mnt/sql-bootstrap
+              readOnly: true
+      volumes:
+        - name: sql-bootstrap-secrets
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: {{ .Values.sqlBootstrap.secretProviderClassName | quote }}
+{{- end }}

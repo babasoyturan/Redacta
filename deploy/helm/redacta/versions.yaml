@@ -1,0 +1,24 @@
+frontend:
+  image:
+    repository: acrredacta7t9.azurecr.io/redacta-frontend
+    tag: dbe61c2-20-1
+
+documentService:
+  image:
+    repository: acrredacta7t9.azurecr.io/redacta-document-service
+    tag: dbe61c2-34-1
+
+authenticationService:
+  image:
+    repository: acrredacta7t9.azurecr.io/redacta-authentication-service
+    tag: dbe61c2-34-1
+
+anonymizationService:
+  image:
+    repository: acrredacta7t9.azurecr.io/redacta-anonymization-service
+    tag: dbe61c2-34-1
+
+genaiService:
+  image:
+    repository: acrredacta7t9.azurecr.io/redacta-genai-service
+    tag: dbe61c2-34-1

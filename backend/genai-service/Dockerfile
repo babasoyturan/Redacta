@@ -6,18 +6,22 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends build-essential \
+    && apt-get upgrade -y \
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN python -m pip install --no-cache-dir --upgrade pip setuptools wheel \
+    && pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-RUN useradd --create-home --shell /usr/sbin/nologin appuser \
-    && chown -R appuser:appuser /app
+# Kubernetes runAsNonRoot requires a numeric UID/GID it can verify.
+RUN groupadd --gid 10001 appuser \
+    && useradd --uid 10001 --gid 10001 --create-home --shell /usr/sbin/nologin appuser \
+    && chown -R 10001:10001 /app
 
 EXPOSE 8000
-USER appuser
+USER 10001:10001
 
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

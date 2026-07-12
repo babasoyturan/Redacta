@@ -1,0 +1,117 @@
+global:
+  imagePullPolicy: IfNotPresent
+
+spring:
+  profile: cloud
+
+deploymentStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 0
+    maxUnavailable: 1
+
+frontend:
+  image:
+    repository: acrredacta7t9.azurecr.io/redacta-frontend
+    tag: replace-me
+  replicaCount: 1
+
+documentService:
+  image:
+    repository: acrredacta7t9.azurecr.io/redacta-document-service
+    tag: replace-me
+  replicaCount: 1
+  storageLocation: /mnt/redacta-documents
+  persistence:
+    enabled: true
+    storageClassName: azurefile-csi
+    size: 20Gi
+    shareName: redacta-documents
+    resourceGroupName: rg-redacta-development
+    storageAccountName: stredactadev7t9
+    secretName: redacta-azure-files-secret
+    reclaimPolicy: Retain
+  databaseUrl: jdbc:sqlserver://sql-redacta-dev-7t9.database.windows.net:1433;database=documentdb;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;
+  jwtIssuerUri: http://keycloak:8080/realms/oopsops
+
+authenticationService:
+  image:
+    repository: acrredacta7t9.azurecr.io/redacta-authentication-service
+    tag: replace-me
+  replicaCount: 1
+  databaseUrl: jdbc:sqlserver://sql-redacta-dev-7t9.database.windows.net:1433;database=authdb;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;
+
+anonymizationService:
+  image:
+    repository: acrredacta7t9.azurecr.io/redacta-anonymization-service
+    tag: replace-me
+  replicaCount: 1
+  databaseUrl: jdbc:sqlserver://sql-redacta-dev-7t9.database.windows.net:1433;database=anonymizationdb;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;
+  jwtIssuerUri: http://keycloak:8080/realms/oopsops
+
+genaiService:
+  image:
+    repository: acrredacta7t9.azurecr.io/redacta-genai-service
+    tag: replace-me
+  replicaCount: 1
+  localFallback: false
+
+keycloak:
+  enabled: true
+  authServerUrl: http://keycloak:8080
+  database:
+    vendor: mssql
+    url: jdbc:sqlserver://sql-redacta-dev-7t9.database.windows.net:1433;database=keycloakdb;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;
+
+serviceAccount:
+  create: true
+  components:
+    documentService: redacta-document-service
+    authenticationService: redacta-authentication-service
+    anonymizationService: redacta-anonymization-service
+    genaiService: redacta-genai-service
+    keycloak: redacta-keycloak
+
+workloadIdentity:
+  enabled: true
+  clientIds:
+    documentService: ba920bfd-924b-486d-9166-1b3a71f2c373
+    authenticationService: 7860bb9b-8696-46dc-9280-f7e6d067c76a
+    anonymizationService: 3975e99e-4309-4389-85e2-d2a3021b146c
+    genaiService: 535b8f7c-7456-4da8-97ce-b7b3c1ff073b
+    keycloak: 184ff06a-c8ff-4452-945b-2aa5bcb9c3bd
+
+keyVault:
+  csi:
+    enabled: true
+    vaultName: kv-redacta-dev-swec
+    tenantId: 84f58ce9-43c8-4932-b908-591a8a3007d3
+
+sqlBootstrap:
+  enabled: true
+  serverFqdn: sql-redacta-dev-7t9.database.windows.net
+
+secrets:
+  create: false
+  name: redacta-app-secrets
+  names:
+    documentService: redacta-document-service-secrets
+    authenticationService: redacta-authentication-service-secrets
+    anonymizationService: redacta-anonymization-service-secrets
+    genaiService: redacta-genai-service-secrets
+    keycloak: redacta-keycloak-secrets
+
+ingress:
+  enabled: true
+  className: azure-application-gateway
+  host: dev.redacta.example.com
+  annotations:
+    appgw.ingress.kubernetes.io/use-private-ip: "false"
+
+autoscaling:
+  enabled: false
+
+monitoring:
+  serviceMonitor:
+    enabled: true
+    apiVersion: azmonitoring.coreos.com/v1

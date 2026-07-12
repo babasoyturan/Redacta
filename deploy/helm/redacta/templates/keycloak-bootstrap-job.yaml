@@ -1,0 +1,125 @@
+{{- if and .Values.keycloak.enabled .Values.keycloak.bootstrap.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Values.keycloak.service.name }}-bootstrap-v2
+  labels:
+    {{- include "redacta.labels" . | nindent 4 }}
+    app.kubernetes.io/component: keycloak-bootstrap
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded,HookFailed
+spec:
+  backoffLimit: 6
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        {{- include "redacta.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: keycloak-bootstrap
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: keycloak-bootstrap
+          image: "{{ .Values.keycloak.image.repository }}:{{ .Values.keycloak.image.tag }}"
+          imagePullPolicy: {{ default .Values.global.imagePullPolicy .Values.keycloak.image.pullPolicy }}
+          command:
+            - /bin/sh
+            - -ec
+          args:
+            - |
+              KCADM=/opt/keycloak/bin/kcadm.sh
+
+              until "$KCADM" config credentials \
+                --server "$KEYCLOAK_URL" \
+                --realm master \
+                --user "$KEYCLOAK_ADMIN" \
+                --password "$KEYCLOAK_ADMIN_PASSWORD"; do
+                echo "Waiting for Keycloak admin API..."
+                sleep 5
+              done
+
+              if ! "$KCADM" get "realms/$KEYCLOAK_REALM" >/dev/null 2>&1; then
+                "$KCADM" create realms \
+                  -s realm="$KEYCLOAK_REALM" \
+                  -s enabled=true \
+                  -s displayName="$KEYCLOAK_REALM"
+              fi
+
+              if ! "$KCADM" get "roles/$KEYCLOAK_ROLE" -r "$KEYCLOAK_REALM" >/dev/null 2>&1; then
+                "$KCADM" create roles -r "$KEYCLOAK_REALM" -s name="$KEYCLOAK_ROLE"
+              fi
+
+              get_client_uuid() {
+                "$KCADM" get clients \
+                  -r "$KEYCLOAK_REALM" \
+                  -q clientId="$KEYCLOAK_CLIENT_ID" 2>/dev/null \
+                  | sed -n 's/.*"id" *: *"\([^"]*\)".*/\1/p' \
+                  | head -n 1
+              }
+
+              CLIENT_UUID="$(get_client_uuid || true)"
+
+              if [ -z "$CLIENT_UUID" ]; then
+                "$KCADM" create clients -r "$KEYCLOAK_REALM" \
+                  -s clientId="$KEYCLOAK_CLIENT_ID" \
+                  -s enabled=true \
+                  -s protocol=openid-connect \
+                  -s publicClient=false \
+                  -s clientAuthenticatorType=client-secret \
+                  -s serviceAccountsEnabled=true \
+                  -s directAccessGrantsEnabled=true \
+                  -s standardFlowEnabled=true \
+                  -s fullScopeAllowed=true \
+                  -s secret="$KEYCLOAK_CLIENT_SECRET" || true
+
+                CLIENT_UUID="$(get_client_uuid || true)"
+              fi
+
+              if [ -z "$CLIENT_UUID" ]; then
+                echo "Unable to resolve Keycloak client UUID for $KEYCLOAK_CLIENT_ID"
+                exit 1
+              fi
+
+              "$KCADM" update "clients/$CLIENT_UUID" -r "$KEYCLOAK_REALM" \
+                -s enabled=true \
+                -s protocol=openid-connect \
+                -s publicClient=false \
+                -s clientAuthenticatorType=client-secret \
+                -s serviceAccountsEnabled=true \
+                -s directAccessGrantsEnabled=true \
+                -s standardFlowEnabled=true \
+                -s fullScopeAllowed=true \
+                -s secret="$KEYCLOAK_CLIENT_SECRET"
+
+              "$KCADM" add-roles -r "$KEYCLOAK_REALM" \
+                --uusername "service-account-$KEYCLOAK_CLIENT_ID" \
+                --cclientid realm-management \
+                --rolename "$KEYCLOAK_SERVICE_ACCOUNT_ROLE" || true
+          env:
+            - name: KEYCLOAK_URL
+              value: {{ .Values.keycloak.authServerUrl | quote }}
+            - name: KEYCLOAK_REALM
+              value: {{ .Values.keycloak.realm | quote }}
+            - name: KEYCLOAK_CLIENT_ID
+              value: {{ .Values.keycloak.clientId | quote }}
+            - name: KEYCLOAK_ROLE
+              value: {{ .Values.keycloak.bootstrap.roleName | quote }}
+            - name: KEYCLOAK_SERVICE_ACCOUNT_ROLE
+              value: {{ .Values.keycloak.bootstrap.serviceAccountRole | quote }}
+            - name: KEYCLOAK_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "redacta.componentSecretName" (dict "root" . "component" "authenticationService") }}
+                  key: keycloak-client-secret
+            - name: KEYCLOAK_ADMIN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "redacta.componentSecretName" (dict "root" . "component" "keycloak") }}
+                  key: {{ .Values.keycloak.admin.usernameSecretKey }}
+            - name: KEYCLOAK_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "redacta.componentSecretName" (dict "root" . "component" "keycloak") }}
+                  key: {{ .Values.keycloak.admin.passwordSecretKey }}
+{{- end }}

@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: redacta-production
+  namespace: argocd
+spec:
+  project: redacta-production
+  source:
+    repoURL: git@github.com:babasoyturan/Redacta.git
+    targetRevision: main
+    path: deploy/helm/redacta
+    helm:
+      releaseName: redacta
+      valueFiles:
+        - values-cloud-production.yaml
+        - versions.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: redacta
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

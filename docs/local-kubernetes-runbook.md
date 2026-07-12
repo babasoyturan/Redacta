@@ -238,16 +238,82 @@ kubectl get hpa -n redacta
 kubectl top pods -n redacta
 ```
 
-## CI Workflow Validation
+## CI/CD Workflow Contract
 
-The repository has separate GitHub Actions workflows for frontend and backend validation:
+The repository has two application workflows:
 
-- `.github/workflows/frontend-ci.yml` runs `npm ci`, frontend lint, frontend build, and frontend Docker image build validation.
-- `.github/workflows/backend-ci.yml` runs Java 21 tests, GenAI pytest, and Docker image build validation for all backend services.
+- `.github/workflows/frontend-ci-cd.yml`
+- `.github/workflows/backend-ci-cd.yml`
 
-These workflows intentionally do not deploy anything. Deployment is handled by Helm locally and later by GitOps/Argo CD.
+`frontend/**` changes run only the frontend workflow. `backend/**` changes run the backend workflow. Backend detection is component-aware:
 
-Equivalent local checks:
+- `backend/document-service/**` affects `documentService`
+- `backend/authentication-service/**` affects `authenticationService`
+- `backend/anonymization-service/**` affects `anonymizationService`
+- `backend/genai-service/**` affects `genaiService`
+- shared Gradle files affect only the three Java services
+
+Pull requests validate only. They do not push images, update GitOps state, or deploy:
+
+```text
+checkout
+dependency cache
+lint / tests / build validation
+SonarQube Cloud, if configured
+Trivy filesystem scan
+Helm lint/template, if chart files changed
+```
+
+Merges to `main` publish only after validation passes and publish credentials are configured:
+
+```text
+detect changed components
+build exact image
+Trivy image scan
+generate CycloneDX SBOM
+push image to Docker Hub
+update deploy/helm/redacta/versions.yaml
+commit with the GitOps bot
+Argo CD deploys by Git polling
+```
+
+Image tags use this immutable format:
+
+```text
+<short-sha>-<run-number>-<run-attempt>
+```
+
+The CI system never deploys directly with `kubectl apply`, `helm upgrade`, or Argo CD API calls. Argo CD is the deployment controller.
+
+Required repository variables:
+
+```text
+DOCKERHUB_USERNAME
+SONAR_ORGANIZATION
+GITOPS_APP_ID
+```
+
+Required repository secrets:
+
+```text
+DOCKERHUB_TOKEN
+SONAR_TOKEN
+GITOPS_APP_PRIVATE_KEY
+```
+
+If SonarQube credentials are missing, Sonar analysis is explicitly skipped while the normal validation still runs. If Docker Hub or GitOps bot credentials are missing on `main`, image publishing and `versions.yaml` write-back are skipped.
+
+Runtime application secrets must not be added to GitHub Actions. OpenAI API keys, database passwords, Keycloak passwords, and client secrets remain Kubernetes runtime secrets.
+
+GitOps image state is stored in:
+
+```text
+deploy/helm/redacta/versions.yaml
+```
+
+Argo CD reads `values-gitops-local.yaml` first and `versions.yaml` second, so CI can update only image repository/tag values without changing runtime configuration.
+
+Equivalent local validation checks:
 
 ```powershell
 cd frontend
@@ -415,7 +481,7 @@ redacta-monitoring-local
 redacta-app-local
 ```
 
-Automated sync is disabled during first local adoption. Enable it only after the Applications are `Synced` and `Healthy`.
+`redacta-app-local` has automated sync enabled so image changes written to `deploy/helm/redacta/versions.yaml` are applied by Argo CD Git polling. The root, infra, and monitoring Applications stay manual for local control. The app Application does not enable prune or self-heal yet.
 
 ## Local DNS
 

@@ -9,6 +9,7 @@ spec:
   {{- if not (and .Values.autoscaling.enabled .Values.autoscaling.components.documentService) }}
   replicas: {{ .Values.documentService.replicaCount }}
   {{- end }}
+  {{- include "redacta.deploymentStrategy" (dict "root" . "component" "documentService") | nindent 2 }}
   selector:
     matchLabels:
       {{- include "redacta.selectorLabels" . | nindent 6 }}
@@ -18,11 +19,16 @@ spec:
       labels:
         {{- include "redacta.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: document-service
+        {{- include "redacta.workloadIdentityLabels" . | nindent 8 }}
     spec:
+      {{- if or .Values.serviceAccount.create .Values.serviceAccount.name (index .Values.serviceAccount.components "documentService") }}
+      serviceAccountName: {{ include "redacta.componentServiceAccountName" (dict "root" . "component" "documentService") }}
+      {{- end }}
       containers:
         - name: document-service
           image: "{{ .Values.documentService.image.repository }}:{{ .Values.documentService.image.tag }}"
           imagePullPolicy: {{ default .Values.global.imagePullPolicy .Values.documentService.image.pullPolicy }}
+          {{- include "redacta.defaultContainerSecurityContext" . | nindent 10 }}
           ports:
             - name: http
               containerPort: {{ .Values.documentService.service.port }}
@@ -34,27 +40,68 @@ spec:
             - name: SPRING_DATASOURCE_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.secrets.name }}
+                  name: {{ include "redacta.componentSecretName" (dict "root" . "component" "documentService") }}
                   key: datasource-username
             - name: SPRING_DATASOURCE_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.secrets.name }}
+                  name: {{ include "redacta.componentSecretName" (dict "root" . "component" "documentService") }}
                   key: datasource-password
             - name: STORAGE_LOCATION
               value: {{ .Values.documentService.storageLocation | quote }}
             - name: SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI
               value: {{ .Values.documentService.jwtIssuerUri | quote }}
+          {{- if or .Values.documentService.persistence.enabled .Values.keyVault.csi.enabled }}
+          volumeMounts:
+            {{- if .Values.documentService.persistence.enabled }}
+            - name: documents-storage
+              mountPath: {{ .Values.documentService.storageLocation | quote }}
+            {{- end }}
+            {{- if .Values.keyVault.csi.enabled }}
+            - name: secrets-store
+              mountPath: /mnt/secrets-store
+              readOnly: true
+            {{- end }}
+          {{- end }}
           readinessProbe:
             httpGet:
               path: /actuator/health
               port: http
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 6
           livenessProbe:
             httpGet:
               path: /actuator/health
               port: http
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 18
           resources:
             {{- toYaml .Values.documentService.resources | nindent 12 }}
+      {{- if or .Values.documentService.persistence.enabled .Values.keyVault.csi.enabled }}
+      volumes:
+        {{- if .Values.documentService.persistence.enabled }}
+        - name: documents-storage
+          persistentVolumeClaim:
+            claimName: {{ include "redacta.fullname" . }}-documents
+        {{- end }}
+        {{- if .Values.keyVault.csi.enabled }}
+        - name: secrets-store
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: {{ include "redacta.secretProviderClassName" (dict "root" . "component" "documentService") | quote }}
+        {{- end }}
+      {{- end }}
 ---
 apiVersion: v1
 kind: Service

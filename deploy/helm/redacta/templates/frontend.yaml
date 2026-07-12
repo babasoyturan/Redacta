@@ -9,6 +9,7 @@ spec:
   {{- if not (and .Values.autoscaling.enabled .Values.autoscaling.components.frontend) }}
   replicas: {{ .Values.frontend.replicaCount }}
   {{- end }}
+  {{- include "redacta.deploymentStrategy" (dict "root" . "component" "frontend") | nindent 2 }}
   selector:
     matchLabels:
       {{- include "redacta.selectorLabels" . | nindent 6 }}
@@ -23,6 +24,7 @@ spec:
         - name: frontend
           image: "{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}"
           imagePullPolicy: {{ default .Values.global.imagePullPolicy .Values.frontend.image.pullPolicy }}
+          {{- include "redacta.defaultContainerSecurityContext" . | nindent 10 }}
           ports:
             - name: http
               containerPort: {{ .Values.frontend.service.port }}

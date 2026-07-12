@@ -1,0 +1,41 @@
+{{- if .Values.documentService.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ include "redacta.fullname" . }}-documents
+  labels:
+    {{- include "redacta.labels" . | nindent 4 }}
+spec:
+  capacity:
+    storage: {{ .Values.documentService.persistence.size | quote }}
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: {{ .Values.documentService.persistence.reclaimPolicy }}
+  storageClassName: {{ .Values.documentService.persistence.storageClassName | quote }}
+  csi:
+    driver: file.csi.azure.com
+    readOnly: false
+    volumeHandle: {{ printf "%s-%s" (include "redacta.fullname" .) "documents" | quote }}
+    volumeAttributes:
+      resourceGroup: {{ .Values.documentService.persistence.resourceGroupName | quote }}
+      shareName: {{ .Values.documentService.persistence.shareName | quote }}
+      storageAccount: {{ .Values.documentService.persistence.storageAccountName | quote }}
+    nodeStageSecretRef:
+      name: {{ .Values.documentService.persistence.secretName | quote }}
+      namespace: {{ .Release.Namespace | quote }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "redacta.fullname" . }}-documents
+  labels:
+    {{- include "redacta.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: {{ .Values.documentService.persistence.storageClassName | quote }}
+  volumeName: {{ include "redacta.fullname" . }}-documents
+  resources:
+    requests:
+      storage: {{ .Values.documentService.persistence.size | quote }}
+{{- end }}

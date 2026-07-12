@@ -29,7 +29,16 @@ documentService:
   service:
     port: 8091
   storageLocation: /tmp/redacta-uploads
-  databaseUrl: jdbc:postgresql://postgres:5432/redacta_documents
+  persistence:
+    enabled: false
+    storageClassName: azurefile-csi
+    size: 20Gi
+    shareName: redacta-documents
+    resourceGroupName: ""
+    storageAccountName: ""
+    secretName: redacta-azure-files-secret
+    reclaimPolicy: Retain
+  databaseUrl: jdbc:sqlserver://replace-sql-server.database.windows.net:1433;database=documentdb;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;
   jwtIssuerUri: http://keycloak:8080/realms/oopsops
   resources:
     requests:
@@ -47,7 +56,7 @@ authenticationService:
     pullPolicy: ""
   service:
     port: 8092
-  databaseUrl: jdbc:postgresql://postgres:5432/redacta_authentication
+  databaseUrl: jdbc:sqlserver://replace-sql-server.database.windows.net:1433;database=authdb;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;
   resources:
     requests:
       cpu: 100m
@@ -64,7 +73,7 @@ anonymizationService:
     pullPolicy: ""
   service:
     port: 8094
-  databaseUrl: jdbc:postgresql://postgres:5432/redacta_anonymization
+  databaseUrl: jdbc:sqlserver://replace-sql-server.database.windows.net:1433;database=anonymizationdb;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;
   jwtIssuerUri: http://keycloak:8080/realms/oopsops
   resources:
     requests:
@@ -108,18 +117,117 @@ autoscaling:
 monitoring:
   serviceMonitor:
     enabled: false
+    apiVersion: monitoring.coreos.com/v1
     interval: 15s
     scrapeTimeout: 10s
 
+serviceAccount:
+  create: false
+  name: ""
+  annotations: {}
+  components:
+    documentService: ""
+    authenticationService: ""
+    anonymizationService: ""
+    genaiService: ""
+    keycloak: ""
+
+workloadIdentity:
+  enabled: false
+  clientId: ""
+  clientIds:
+    documentService: ""
+    authenticationService: ""
+    anonymizationService: ""
+    genaiService: ""
+    keycloak: ""
+
+keyVault:
+  csi:
+    enabled: false
+    secretProviderClassName: redacta-keyvault-secrets
+    secretProviderClassNames:
+      documentService: redacta-document-service-keyvault-secrets
+      authenticationService: redacta-authentication-service-keyvault-secrets
+      anonymizationService: redacta-anonymization-service-keyvault-secrets
+      genaiService: redacta-genai-service-keyvault-secrets
+      keycloak: redacta-keycloak-keyvault-secrets
+    vaultName: ""
+    tenantId: ""
+    objects:
+      datasourceUsername: datasource-username
+      datasourcePassword: datasource-password
+      keycloakClientSecret: keycloak-client-secret
+      keycloakAdminUsername: keycloak-admin-username
+      keycloakAdminPassword: keycloak-admin-password
+      keycloakDbUsername: keycloak-db-username
+      keycloakDbPassword: keycloak-db-password
+      openaiApiKey: openai-api-key
+      sqlAdminUsername: sql-admin-username
+      sqlAdminPassword: sql-admin-password
+
+sqlBootstrap:
+  enabled: false
+  image:
+    repository: mcr.microsoft.com/mssql-tools
+    tag: latest
+    pullPolicy: IfNotPresent
+  serverFqdn: replace-sql-server.database.windows.net
+  secretProviderClassName: redacta-sql-bootstrap-keyvault-secrets
+  serviceAccountComponent: keycloak
+  applicationDatabases:
+    - authdb
+    - documentdb
+    - anonymizationdb
+  keycloakDatabase: keycloakdb
+
 keycloak:
+  enabled: false
+  image:
+    repository: quay.io/keycloak/keycloak
+    tag: 22.0.3
+    pullPolicy: ""
+  replicaCount: 1
+  service:
+    name: keycloak
+    port: 8080
+  database:
+    vendor: mssql
+    url: ""
+    usernameSecretKey: keycloak-db-username
+    passwordSecretKey: keycloak-db-password
+  admin:
+    usernameSecretKey: keycloak-admin-username
+    passwordSecretKey: keycloak-admin-password
+  hostnameStrict: false
+  httpEnabled: true
+  proxy: edge
+  transactionXaEnabled: false
   authServerUrl: http://keycloak:8080
   realm: oopsops
   clientId: oopsops-backend
   adminClientId: admin-cli
+  bootstrap:
+    enabled: true
+    roleName: user
+    serviceAccountRole: manage-users
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      cpu: 750m
+      memory: 1Gi
 
 secrets:
   create: false
   name: redacta-app-secrets
+  names:
+    documentService: ""
+    authenticationService: ""
+    anonymizationService: ""
+    genaiService: ""
+    keycloak: ""
   values:
     datasourceUsername: ""
     datasourcePassword: ""
@@ -130,6 +238,6 @@ secrets:
 
 ingress:
   enabled: true
-  className: traefik
-  host: redacta.local
+  className: azure-application-gateway
+  host: redacta.example.com
   annotations: {}

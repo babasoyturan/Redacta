@@ -1,28 +1,34 @@
 # Redacta
 
-Redacta is a multi-service application that is being developed into a complete DevOps final project.
+Redacta is a multi-service document anonymization and summarization application prepared as a DevOps final project.
 
-## Current Delivery Target
+The current delivery target is Azure Kubernetes Service with GitOps-based deployment. The earlier local Kubernetes work is kept as historical/local validation material, but the active project path is cloud-first.
 
-The first complete delivery environment is local Kubernetes on Minikube. The project is intentionally being prepared so that the same delivery model can later be migrated to Azure when subscription access becomes available.
+## Architecture
 
-The local platform will eventually include:
+Redacta is split into five application services:
 
-- Docker containerization
-- Kubernetes on Minikube
-- Helm
-- Traefik
-- Sealed Secrets
-- Argo CD and GitOps
-- GitHub Actions CI/CD
-- Docker Hub
-- Prometheus, Grafana, and Alertmanager
-- Security scanning
-- Operational runbooks
+- Frontend: React/Vite
+- Document Service: Spring Boot
+- Authentication Service: Spring Boot
+- Anonymization Service: Spring Boot
+- GenAI Service: Python/FastAPI
+- Identity Provider: Keycloak
 
-Azure migration will be implemented later and will target AKS, ACR, Azure SQL, Azure Files, Key Vault, Application Gateway WAF_v2, AGIC, and Terraform.
+The Azure platform uses:
 
-## Application Structure
+- AKS for Kubernetes workloads
+- ACR for container images
+- Azure SQL for application databases
+- Azure Files for uploaded document storage
+- Azure Key Vault with Secrets Store CSI Driver and Workload Identity
+- Application Gateway WAF_v2 with AGIC for public ingress
+- Azure Monitor Managed Prometheus and Managed Grafana
+- Terraform for infrastructure
+- Argo CD for GitOps deployment
+- GitHub Actions for CI/CD
+
+## Repository Layout
 
 ```text
 frontend/
@@ -32,37 +38,65 @@ backend/
   anonymization-service/
   genai-service/
 keycloak/
+deploy/
+  helm/redacta/
+  gitops/argocd/
+terraform/
+  modules/
+  stacks/
+scripts/
 docs/
 ```
 
-## Application Components
-
-- Frontend: React/Vite
-- Document Service: Spring Boot
-- Authentication Service: Spring Boot
-- Anonymization Service: Spring Boot
-- GenAI Service: Python/FastAPI
-- Identity Provider: Keycloak
-- Local Database: PostgreSQL
-
 ## Delivery Model
 
-The project follows a GitOps delivery model:
+The repository follows a promotion-based GitOps model:
 
 ```text
-Developer
-  -> GitHub
-  -> GitHub Actions
-  -> Build, test, scan, and publish images
-  -> Update Git deployment state
-  -> Argo CD
-  -> Kubernetes
+dev branch
+  -> GitHub Actions validates, scans, builds, and publishes images
+  -> GitHub Actions updates deploy/helm/redacta/versions.yaml
+  -> Argo CD development app syncs dev branch
+
+main branch
+  -> receives the already-tested versions.yaml through merge
+  -> production uses the same image versions from main
+  -> Argo CD production app syncs main branch
 ```
 
-CI is responsible for validation, image publishing, and updating Git deployment state. CI must not deploy directly to Kubernetes with `kubectl apply`, `helm upgrade`, or direct Argo CD API calls.
+There is one image version file: `deploy/helm/redacta/versions.yaml`.
 
-## Current Project Status
+Development and production do not maintain separate image version files. Development writes the tested image tags into `versions.yaml`; production receives those exact versions when `dev` is merged into `main`.
 
-The repository currently contains only the cleaned application source code and this orientation README.
+## GitHub Actions
 
-Dockerfiles, Docker Compose files, Helm charts, Kubernetes manifests, CI/CD workflows, Argo CD definitions, monitoring configuration, and other DevOps delivery artifacts will be added incrementally in later implementation stages.
+Active workflow files:
+
+- `.github/workflows/backend-ci-cd.yml`
+- `.github/workflows/frontend-ci-cd.yml`
+- `.github/workflows/infrastructure.yml`
+
+Backend and frontend workflows validate code, run security checks, build container images, push them to ACR, generate SBOM artifacts, and update `versions.yaml` on `dev`.
+
+The infrastructure workflow validates Terraform and applies Azure infrastructure. After a successful environment apply, it exports Terraform outputs and updates the matching cloud Helm values file:
+
+- `deploy/helm/redacta/values-cloud-development.yaml`
+- `deploy/helm/redacta/values-cloud-production.yaml`
+
+No destroy, recreate, start, or stop workflow is kept in the repository. Cost-control actions are manual and documented in the runbook.
+
+## Current Status
+
+Development cloud is deployed and verified on AKS:
+
+- Argo CD application: `Synced / Healthy`
+- Ingress host: `dev.redacta.example.com`
+- Public entrypoint: Azure Application Gateway
+- Smoke checks covered frontend, authentication, protected API access, and a minimal GenAI summary request.
+
+Production infrastructure is intentionally not deployed yet. The production resource group exists as a low-cost placeholder; production AKS, SQL, Key Vault, Application Gateway, and app deployment should be created when production secrets and final domain values are ready.
+
+## Runbooks
+
+- Cloud deployment and recovery: `docs/cloud-runbook.md`
+- Earlier local Kubernetes runbook: `docs/local-kubernetes-runbook.md`

@@ -14,12 +14,15 @@ RUN ./gradlew :authentication-service:bootJar --no-daemon
 
 FROM eclipse-temurin:21-jre-alpine
 
-RUN addgroup -S app && adduser -S app -G app
+# Kubernetes runAsNonRoot requires a numeric image user it can verify.
+RUN apk upgrade --no-cache \
+    && addgroup -S -g 10001 app \
+    && adduser -S -u 10001 -G app app
 WORKDIR /app
 
 COPY --from=build /workspace/authentication-service/build/libs/*.jar app.jar
 
 EXPOSE 8092
-USER app
+USER 10001:10001
 
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]

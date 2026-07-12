@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: redacta-production
+  namespace: argocd
+spec:
+  description: Production GitOps project for Redacta
+  sourceRepos:
+    - git@github.com:babasoyturan/Redacta.git
+  destinations:
+    - namespace: redacta
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: "*"
+      kind: "*"
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"

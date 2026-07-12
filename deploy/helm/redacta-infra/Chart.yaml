@@ -1,6 +1,0 @@
-apiVersion: v2
-name: redacta-infra
-description: Local Kubernetes infrastructure for Redacta
-type: application
-version: 0.1.0
-appVersion: "0.1.0"

@@ -1,12 +1,13 @@
 plugins {
-    id 'org.springframework.boot' version '3.5.0'
+    id 'org.springframework.boot' version '3.5.16'
     id 'java'
 }
 
 dependencies {
-    // JPA & Postgres
+    // JPA database drivers
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation "org.postgresql:postgresql"
+    implementation "com.microsoft.sqlserver:mssql-jdbc"
 
     // PDF parsing
     implementation 'org.apache.pdfbox:pdfbox:2.0.27'

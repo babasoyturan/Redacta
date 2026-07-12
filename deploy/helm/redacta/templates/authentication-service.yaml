@@ -9,6 +9,7 @@ spec:
   {{- if not (and .Values.autoscaling.enabled .Values.autoscaling.components.authenticationService) }}
   replicas: {{ .Values.authenticationService.replicaCount }}
   {{- end }}
+  {{- include "redacta.deploymentStrategy" (dict "root" . "component" "authenticationService") | nindent 2 }}
   selector:
     matchLabels:
       {{- include "redacta.selectorLabels" . | nindent 6 }}
@@ -18,11 +19,16 @@ spec:
       labels:
         {{- include "redacta.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: authentication-service
+        {{- include "redacta.workloadIdentityLabels" . | nindent 8 }}
     spec:
+      {{- if or .Values.serviceAccount.create .Values.serviceAccount.name (index .Values.serviceAccount.components "authenticationService") }}
+      serviceAccountName: {{ include "redacta.componentServiceAccountName" (dict "root" . "component" "authenticationService") }}
+      {{- end }}
       containers:
         - name: authentication-service
           image: "{{ .Values.authenticationService.image.repository }}:{{ .Values.authenticationService.image.tag }}"
           imagePullPolicy: {{ default .Values.global.imagePullPolicy .Values.authenticationService.image.pullPolicy }}
+          {{- include "redacta.defaultContainerSecurityContext" . | nindent 10 }}
           ports:
             - name: http
               containerPort: {{ .Values.authenticationService.service.port }}
@@ -34,12 +40,12 @@ spec:
             - name: SPRING_DATASOURCE_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.secrets.name }}
+                  name: {{ include "redacta.componentSecretName" (dict "root" . "component" "authenticationService") }}
                   key: datasource-username
             - name: SPRING_DATASOURCE_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.secrets.name }}
+                  name: {{ include "redacta.componentSecretName" (dict "root" . "component" "authenticationService") }}
                   key: datasource-password
             - name: KEYCLOAK_AUTH_SERVER_URL
               value: {{ .Values.keycloak.authServerUrl | quote }}
@@ -50,30 +56,45 @@ spec:
             - name: KEYCLOAK_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.secrets.name }}
+                  name: {{ include "redacta.componentSecretName" (dict "root" . "component" "authenticationService") }}
                   key: keycloak-client-secret
             - name: KEYCLOAK_ADMIN_CLIENT_ID
               value: {{ .Values.keycloak.adminClientId | quote }}
             - name: KEYCLOAK_ADMIN_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.secrets.name }}
+                  name: {{ include "redacta.componentSecretName" (dict "root" . "component" "authenticationService") }}
                   key: keycloak-admin-username
             - name: KEYCLOAK_ADMIN_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.secrets.name }}
+                  name: {{ include "redacta.componentSecretName" (dict "root" . "component" "authenticationService") }}
                   key: keycloak-admin-password
+          {{- include "redacta.secretVolumeMounts" . | nindent 10 }}
           readinessProbe:
             httpGet:
               path: /actuator/health
               port: http
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 6
           livenessProbe:
             httpGet:
               path: /actuator/health
               port: http
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 18
           resources:
             {{- toYaml .Values.authenticationService.resources | nindent 12 }}
+      {{- include "redacta.secretVolumes" (dict "root" . "component" "authenticationService") | nindent 6 }}
 ---
 apiVersion: v1
 kind: Service
