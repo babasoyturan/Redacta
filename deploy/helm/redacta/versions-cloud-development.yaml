@@ -1,7 +1,7 @@
 frontend:
   image:
     repository: acrredacta7t9.azurecr.io/redacta-frontend
-    tag: cf0f7cf-16-1
+    tag: 1dc557e-17-1
 
 documentService:
   image:
