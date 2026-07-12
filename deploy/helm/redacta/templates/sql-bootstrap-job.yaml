@@ -120,8 +120,7 @@ spec:
                   BEGIN
                     DECLARE @create nvarchar(max) =
                       N'CREATE LOGIN ' + QUOTENAME(@login) +
-                      N' WITH PASSWORD = ' + QUOTENAME(@password, '''') +
-                      N', CHECK_POLICY = OFF';
+                      N' WITH PASSWORD = ' + QUOTENAME(@password, '''');
                     EXEC(@create);
                   END
                   ELSE
