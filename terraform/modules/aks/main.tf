@@ -23,7 +23,7 @@ resource "azurerm_kubernetes_cluster" "this" {
     auto_scaling_enabled         = true
     min_count                    = var.system_node_min_count
     max_count                    = var.system_node_max_count
-    only_critical_addons_enabled = true
+    only_critical_addons_enabled = var.system_only_critical_addons_enabled
     os_disk_size_gb              = 64
     max_pods                     = 110
     temporary_name_for_rotation  = "systemtmp"
@@ -82,6 +82,8 @@ resource "azurerm_kubernetes_cluster" "this" {
 }
 
 resource "azurerm_kubernetes_cluster_node_pool" "user" {
+  count = var.user_node_pool_enabled ? 1 : 0
+
   name                  = "user"
   kubernetes_cluster_id = azurerm_kubernetes_cluster.this.id
   vm_size               = var.user_node_vm_size

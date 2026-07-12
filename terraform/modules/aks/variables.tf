@@ -75,6 +75,12 @@ variable "managed_prometheus_enabled" {
   default     = true
 }
 
+variable "system_only_critical_addons_enabled" {
+  type        = bool
+  description = "Restrict the system node pool to critical add-ons only."
+  default     = true
+}
+
 variable "system_node_vm_size" {
   type        = string
   description = "VM size for the system node pool."
@@ -100,6 +106,12 @@ variable "user_node_vm_size" {
   type        = string
   description = "VM size for the user node pool."
   default     = "Standard_B2s_v2"
+}
+
+variable "user_node_pool_enabled" {
+  type        = bool
+  description = "Create a separate user node pool for application workloads."
+  default     = true
 }
 
 variable "user_node_count" {
