@@ -344,7 +344,7 @@ jobs:
         run: |
           set -euo pipefail
           missing=false
-          for value in "$AZURE_CLIENT_ID_TERRAFORM_DEVELOPMENT" "$AZURE_TENANT_ID" "$AZURE_SUBSCRIPTION_ID" "$TFSTATE_STORAGE_ACCOUNT_NAME" "$AZURE_LOCATION" "$TF_VAR_api_server_authorized_ip_ranges" "$TF_VAR_sql_administrator_login_password"; do
+          for value in "$AZURE_CLIENT_ID_TERRAFORM_DEVELOPMENT" "$AZURE_TENANT_ID" "$AZURE_SUBSCRIPTION_ID" "$TFSTATE_STORAGE_ACCOUNT_NAME" "$AZURE_LOCATION" "$ACR_LOGIN_SERVER" "$TF_VAR_api_server_authorized_ip_ranges" "$TF_VAR_sql_administrator_login_password"; do
             if [ -z "$value" ]; then
               missing=true
             fi
@@ -460,7 +460,7 @@ jobs:
         run: |
           set -euo pipefail
           missing=false
-          for value in "$AZURE_CLIENT_ID_TERRAFORM_PRODUCTION" "$AZURE_TENANT_ID" "$AZURE_SUBSCRIPTION_ID" "$TFSTATE_STORAGE_ACCOUNT_NAME" "$AZURE_LOCATION" "$TF_VAR_api_server_authorized_ip_ranges" "$TF_VAR_sql_administrator_login_password"; do
+          for value in "$AZURE_CLIENT_ID_TERRAFORM_PRODUCTION" "$AZURE_TENANT_ID" "$AZURE_SUBSCRIPTION_ID" "$TFSTATE_STORAGE_ACCOUNT_NAME" "$AZURE_LOCATION" "$ACR_LOGIN_SERVER" "$TF_VAR_api_server_authorized_ip_ranges" "$TF_VAR_sql_administrator_login_password"; do
             if [ -z "$value" ]; then
               missing=true
             fi

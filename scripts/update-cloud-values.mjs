@@ -117,9 +117,14 @@ function yaml(options, outputs) {
   const keyVaultName = getRequiredString(outputs, "key_vault_name");
   const clientIds = getWorkloadClientIds(outputs);
   const tenantId = options.tenantId.trim();
+  const acrLoginServer = options.acrLoginServer.trim();
 
   if (!tenantId) {
     throw new Error("--tenant-id is required");
+  }
+
+  if (!acrLoginServer) {
+    throw new Error("--acr-login-server is required");
   }
 
   return `global:
@@ -136,13 +141,13 @@ deploymentStrategy:
 
 frontend:
   image:
-    repository: ${imageRepository("frontend", options.acrLoginServer)}
+    repository: ${imageRepository("frontend", acrLoginServer)}
     tag: replace-me
   replicaCount: 1
 
 documentService:
   image:
-    repository: ${imageRepository("documentService", options.acrLoginServer)}
+    repository: ${imageRepository("documentService", acrLoginServer)}
     tag: replace-me
   replicaCount: 1
   storageLocation: /mnt/redacta-documents
@@ -160,14 +165,14 @@ documentService:
 
 authenticationService:
   image:
-    repository: ${imageRepository("authenticationService", options.acrLoginServer)}
+    repository: ${imageRepository("authenticationService", acrLoginServer)}
     tag: replace-me
   replicaCount: 1
   databaseUrl: ${databaseUrl(sqlFqdn, "authdb")}
 
 anonymizationService:
   image:
-    repository: ${imageRepository("anonymizationService", options.acrLoginServer)}
+    repository: ${imageRepository("anonymizationService", acrLoginServer)}
     tag: replace-me
   replicaCount: 1
   databaseUrl: ${databaseUrl(sqlFqdn, "anonymizationdb")}
@@ -175,7 +180,7 @@ anonymizationService:
 
 genaiService:
   image:
-    repository: ${imageRepository("genaiService", options.acrLoginServer)}
+    repository: ${imageRepository("genaiService", acrLoginServer)}
     tag: replace-me
   replicaCount: 1
   localFallback: false
