@@ -75,11 +75,11 @@ serviceAccount:
 workloadIdentity:
   enabled: true
   clientIds:
-    documentService: ba920bfd-924b-486d-9166-1b3a71f2c373
-    authenticationService: 7860bb9b-8696-46dc-9280-f7e6d067c76a
-    anonymizationService: 3975e99e-4309-4389-85e2-d2a3021b146c
-    genaiService: 535b8f7c-7456-4da8-97ce-b7b3c1ff073b
-    keycloak: 184ff06a-c8ff-4452-945b-2aa5bcb9c3bd
+    documentService: 46fc16fd-c06f-4249-bd40-08b8220f649c
+    authenticationService: d665d83e-1ebe-4b71-9b07-2234c735e93a
+    anonymizationService: c2986550-ac6a-4903-8d5e-5d2e2c7f85ac
+    genaiService: 61a282b7-6870-4fa1-a847-f5acd8e3365d
+    keycloak: 52195fb2-7e6a-4de0-bdb1-07cdd6500305
 
 keyVault:
   csi:
