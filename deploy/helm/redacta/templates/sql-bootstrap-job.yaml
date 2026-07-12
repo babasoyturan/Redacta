@@ -8,8 +8,6 @@ metadata:
     {{- include "redacta.labels" . | nindent 4 }}
     app.kubernetes.io/component: sql-bootstrap
   annotations:
-    argocd.argoproj.io/hook: PreSync
-    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
     argocd.argoproj.io/sync-wave: "-2"
 spec:
   provider: azure
@@ -48,8 +46,6 @@ metadata:
     {{- include "redacta.labels" . | nindent 4 }}
     app.kubernetes.io/component: sql-bootstrap
   annotations:
-    argocd.argoproj.io/hook: PreSync
-    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded,HookFailed
     argocd.argoproj.io/sync-wave: "-1"
 spec:
   backoffLimit: 6
