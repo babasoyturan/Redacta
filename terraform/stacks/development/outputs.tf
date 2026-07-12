@@ -16,6 +16,11 @@ output "application_gateway_id" {
   value       = module.application_gateway.application_gateway_id
 }
 
+output "application_gateway_name" {
+  description = "Development Application Gateway name."
+  value       = module.application_gateway.application_gateway_name
+}
+
 output "application_gateway_public_ip_address" {
   description = "Development Application Gateway public IP address."
   value       = module.application_gateway.public_ip_address
@@ -41,9 +46,24 @@ output "key_vault_uri" {
   value       = module.key_vault.key_vault_uri
 }
 
+output "key_vault_name" {
+  description = "Development Key Vault name."
+  value       = module.key_vault.key_vault_name
+}
+
 output "documents_storage_account_name" {
   description = "Development documents storage account name."
   value       = module.storage.storage_account_name
+}
+
+output "documents_share_name" {
+  description = "Development Azure Files share name."
+  value       = module.storage.documents_share_name
+}
+
+output "sql_server_name" {
+  description = "Development SQL logical server name."
+  value       = module.sql.sql_server_name
 }
 
 output "sql_server_fqdn" {
