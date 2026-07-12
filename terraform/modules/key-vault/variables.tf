@@ -18,9 +18,9 @@ variable "tenant_id" {
   description = "Microsoft Entra tenant ID."
 }
 
-variable "admin_object_id" {
-  type        = string
-  description = "Object ID granted Key Vault Administrator on the vault."
+variable "admin_object_ids" {
+  type        = set(string)
+  description = "Object IDs granted Key Vault Administrator on the vault."
 }
 
 variable "virtual_network_id" {

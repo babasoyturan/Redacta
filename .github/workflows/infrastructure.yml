@@ -105,6 +105,7 @@ jobs:
       TF_VAR_dns_zone_name: ${{ vars.DNS_ZONE_NAME }}
       TF_VAR_tfstate_storage_account_name: ${{ vars.TFSTATE_STORAGE_ACCOUNT_NAME }}
       TF_VAR_api_server_authorized_ip_ranges: ${{ vars.AKS_API_SERVER_AUTHORIZED_IP_RANGES }}
+      TF_VAR_platform_admin_object_ids: ${{ vars.PLATFORM_ADMIN_OBJECT_IDS }}
       TF_VAR_sql_administrator_login_password: ${{ matrix.stack == 'production' && secrets.SQL_ADMIN_PASSWORD_PRODUCTION || secrets.SQL_ADMIN_PASSWORD_DEVELOPMENT }}
     steps:
       - name: Skip non-selected workflow dispatch stacks
@@ -289,6 +290,7 @@ jobs:
       TF_VAR_location: ${{ vars.AZURE_LOCATION }}
       TF_VAR_tfstate_storage_account_name: ${{ vars.TFSTATE_STORAGE_ACCOUNT_NAME }}
       TF_VAR_api_server_authorized_ip_ranges: ${{ vars.AKS_API_SERVER_AUTHORIZED_IP_RANGES }}
+      TF_VAR_platform_admin_object_ids: ${{ vars.PLATFORM_ADMIN_OBJECT_IDS }}
       TF_VAR_sql_administrator_login_password: ${{ secrets.SQL_ADMIN_PASSWORD_DEVELOPMENT }}
     steps:
       - name: Checkout
@@ -359,6 +361,7 @@ jobs:
       TF_VAR_location: ${{ vars.AZURE_LOCATION }}
       TF_VAR_tfstate_storage_account_name: ${{ vars.TFSTATE_STORAGE_ACCOUNT_NAME }}
       TF_VAR_api_server_authorized_ip_ranges: ${{ vars.AKS_API_SERVER_AUTHORIZED_IP_RANGES }}
+      TF_VAR_platform_admin_object_ids: ${{ vars.PLATFORM_ADMIN_OBJECT_IDS }}
       TF_VAR_sql_administrator_login_password: ${{ secrets.SQL_ADMIN_PASSWORD_PRODUCTION }}
     steps:
       - name: Checkout

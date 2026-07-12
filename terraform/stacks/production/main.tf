@@ -57,7 +57,7 @@ module "key_vault" {
   location                   = data.azurerm_resource_group.production.location
   resource_group_name        = data.azurerm_resource_group.production.name
   tenant_id                  = data.azurerm_client_config.current.tenant_id
-  admin_object_id            = data.azurerm_client_config.current.object_id
+  admin_object_ids           = local.platform_admin_object_ids
   virtual_network_id         = module.network.virtual_network_id
   private_endpoint_subnet_id = module.network.private_endpoint_subnet_id
   admin_ip_rules             = var.api_server_authorized_ip_ranges
@@ -115,7 +115,7 @@ module "aks" {
 }
 
 resource "azurerm_role_assignment" "aks_rbac_cluster_admin" {
-  for_each = setunion(var.aks_rbac_cluster_admin_object_ids, [data.azurerm_client_config.current.object_id])
+  for_each = setunion(var.aks_rbac_cluster_admin_object_ids, local.platform_admin_object_ids)
 
   scope                = module.aks.cluster_id
   role_definition_name = "Azure Kubernetes Service RBAC Cluster Admin"

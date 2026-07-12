@@ -18,9 +18,11 @@ resource "azurerm_key_vault" "this" {
 }
 
 resource "azurerm_role_assignment" "admin" {
+  for_each = var.admin_object_ids
+
   scope                = azurerm_key_vault.this.id
   role_definition_name = "Key Vault Administrator"
-  principal_id         = var.admin_object_id
+  principal_id         = each.value
 }
 
 resource "azurerm_private_dns_zone" "this" {

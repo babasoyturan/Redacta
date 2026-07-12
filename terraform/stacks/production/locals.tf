@@ -11,6 +11,11 @@ locals {
     var.tags
   )
 
+  platform_admin_object_ids = setunion(
+    var.platform_admin_object_ids,
+    [data.azurerm_client_config.current.object_id]
+  )
+
   workload_identities = {
     documentService = {
       name_suffix          = "document-service"
