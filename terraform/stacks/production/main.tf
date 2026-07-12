@@ -93,27 +93,27 @@ module "sql" {
 module "aks" {
   source = "../../modules/aks"
 
-  name_prefix                         = var.name_prefix
-  location                            = data.azurerm_resource_group.production.location
-  resource_group_name                 = data.azurerm_resource_group.production.name
-  tenant_id                           = data.azurerm_client_config.current.tenant_id
-  aks_subnet_id                       = module.network.aks_subnet_id
-  application_gateway_id              = module.application_gateway.application_gateway_id
-  acr_id                              = data.terraform_remote_state.shared.outputs.acr_id
-  api_server_authorized_ip_ranges     = var.api_server_authorized_ip_ranges
-  pod_cidr                            = var.pod_cidr
-  service_cidr                        = var.service_cidr
-  dns_service_ip                      = var.dns_service_ip
-  log_analytics_workspace_id          = module.observability.log_analytics_workspace_id
-  system_only_critical_addons_enabled = false
-  system_node_count                   = var.system_node_count
-  system_node_min_count               = var.system_node_min_count
-  system_node_max_count               = var.system_node_max_count
-  user_node_pool_enabled              = false
-  user_node_count                     = var.user_node_count
-  user_node_min_count                 = var.user_node_min_count
-  user_node_max_count                 = var.user_node_max_count
-  tags                                = local.common_tags
+  name_prefix                     = var.name_prefix
+  location                        = data.azurerm_resource_group.production.location
+  resource_group_name             = data.azurerm_resource_group.production.name
+  tenant_id                       = data.azurerm_client_config.current.tenant_id
+  aks_subnet_id                   = module.network.aks_subnet_id
+  application_gateway_id          = module.application_gateway.application_gateway_id
+  acr_id                          = data.terraform_remote_state.shared.outputs.acr_id
+  api_server_authorized_ip_ranges = var.api_server_authorized_ip_ranges
+  pod_cidr                        = var.pod_cidr
+  service_cidr                    = var.service_cidr
+  dns_service_ip                  = var.dns_service_ip
+  log_analytics_workspace_id      = module.observability.log_analytics_workspace_id
+  system_node_vm_size             = var.system_node_vm_size
+  system_node_count               = var.system_node_count
+  system_node_min_count           = var.system_node_min_count
+  system_node_max_count           = var.system_node_max_count
+  user_node_vm_size               = var.user_node_vm_size
+  user_node_count                 = var.user_node_count
+  user_node_min_count             = var.user_node_min_count
+  user_node_max_count             = var.user_node_max_count
+  tags                            = local.common_tags
 }
 
 resource "azurerm_role_assignment" "aks_rbac_cluster_admin" {

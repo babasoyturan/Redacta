@@ -99,6 +99,12 @@ variable "system_node_count" {
   default     = 1
 }
 
+variable "system_node_vm_size" {
+  type        = string
+  description = "Production system node VM size."
+  default     = "Standard_D2s_v3"
+}
+
 variable "system_node_min_count" {
   type        = number
   description = "Production system node minimum count."
@@ -115,6 +121,12 @@ variable "user_node_count" {
   type        = number
   description = "Production user node initial count."
   default     = 1
+}
+
+variable "user_node_vm_size" {
+  type        = string
+  description = "Production user node VM size."
+  default     = "Standard_D2s_v3"
 }
 
 variable "user_node_min_count" {
