@@ -96,6 +96,10 @@ jobs:
       AZURE_CLIENT_ID_TERRAFORM_SHARED: ${{ vars.AZURE_CLIENT_ID_TERRAFORM_SHARED }}
       AZURE_CLIENT_ID_TERRAFORM_DEVELOPMENT: ${{ vars.AZURE_CLIENT_ID_TERRAFORM_DEVELOPMENT }}
       AZURE_CLIENT_ID_TERRAFORM_PRODUCTION: ${{ vars.AZURE_CLIENT_ID_TERRAFORM_PRODUCTION }}
+      ARM_USE_OIDC: "true"
+      ARM_USE_AZUREAD: "true"
+      ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
       TF_VAR_location: ${{ vars.AZURE_LOCATION }}
       TF_VAR_acr_name: ${{ vars.ACR_NAME }}
       TF_VAR_dns_zone_name: ${{ vars.DNS_ZONE_NAME }}
@@ -179,12 +183,18 @@ jobs:
 
       - name: Terraform init
         if: steps.identity.outputs.can_run == 'true'
+        env:
+          ARM_CLIENT_ID: ${{ steps.identity.outputs.client_id }}
         run: |
           terraform -chdir="terraform/stacks/${{ matrix.stack }}" init \
-            -backend-config="storage_account_name=${TFSTATE_STORAGE_ACCOUNT_NAME}"
+            -backend-config="storage_account_name=${TFSTATE_STORAGE_ACCOUNT_NAME}" \
+            -backend-config="use_oidc=true" \
+            -backend-config="use_azuread_auth=true"
 
       - name: Terraform plan
         if: steps.identity.outputs.can_run == 'true'
+        env:
+          ARM_CLIENT_ID: ${{ steps.identity.outputs.client_id }}
         run: terraform -chdir="terraform/stacks/${{ matrix.stack }}" plan -no-color
 
   apply-development-shared:
@@ -199,6 +209,11 @@ jobs:
       AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
       AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
       AZURE_CLIENT_ID_TERRAFORM_SHARED: ${{ vars.AZURE_CLIENT_ID_TERRAFORM_SHARED }}
+      ARM_USE_OIDC: "true"
+      ARM_USE_AZUREAD: "true"
+      ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID_TERRAFORM_SHARED }}
+      ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
       TF_VAR_location: ${{ vars.AZURE_LOCATION }}
       TF_VAR_acr_name: ${{ vars.ACR_NAME }}
       TF_VAR_dns_zone_name: ${{ vars.DNS_ZONE_NAME }}
@@ -244,7 +259,9 @@ jobs:
         if: steps.config.outputs.can_run == 'true'
         run: |
           terraform -chdir="terraform/stacks/shared" init \
-            -backend-config="storage_account_name=${TFSTATE_STORAGE_ACCOUNT_NAME}"
+            -backend-config="storage_account_name=${TFSTATE_STORAGE_ACCOUNT_NAME}" \
+            -backend-config="use_oidc=true" \
+            -backend-config="use_azuread_auth=true"
 
       - name: Terraform apply
         if: steps.config.outputs.can_run == 'true'
@@ -264,6 +281,11 @@ jobs:
       AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
       AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
       AZURE_CLIENT_ID_TERRAFORM_DEVELOPMENT: ${{ vars.AZURE_CLIENT_ID_TERRAFORM_DEVELOPMENT }}
+      ARM_USE_OIDC: "true"
+      ARM_USE_AZUREAD: "true"
+      ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID_TERRAFORM_DEVELOPMENT }}
+      ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
       TF_VAR_location: ${{ vars.AZURE_LOCATION }}
       TF_VAR_tfstate_storage_account_name: ${{ vars.TFSTATE_STORAGE_ACCOUNT_NAME }}
       TF_VAR_api_server_authorized_ip_ranges: ${{ vars.AKS_API_SERVER_AUTHORIZED_IP_RANGES }}
@@ -309,7 +331,9 @@ jobs:
         if: steps.config.outputs.can_run == 'true'
         run: |
           terraform -chdir="terraform/stacks/development" init \
-            -backend-config="storage_account_name=${TFSTATE_STORAGE_ACCOUNT_NAME}"
+            -backend-config="storage_account_name=${TFSTATE_STORAGE_ACCOUNT_NAME}" \
+            -backend-config="use_oidc=true" \
+            -backend-config="use_azuread_auth=true"
 
       - name: Terraform apply
         if: steps.config.outputs.can_run == 'true'
@@ -327,6 +351,11 @@ jobs:
       AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
       AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
       AZURE_CLIENT_ID_TERRAFORM_PRODUCTION: ${{ vars.AZURE_CLIENT_ID_TERRAFORM_PRODUCTION }}
+      ARM_USE_OIDC: "true"
+      ARM_USE_AZUREAD: "true"
+      ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID_TERRAFORM_PRODUCTION }}
+      ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
       TF_VAR_location: ${{ vars.AZURE_LOCATION }}
       TF_VAR_tfstate_storage_account_name: ${{ vars.TFSTATE_STORAGE_ACCOUNT_NAME }}
       TF_VAR_api_server_authorized_ip_ranges: ${{ vars.AKS_API_SERVER_AUTHORIZED_IP_RANGES }}
@@ -372,7 +401,9 @@ jobs:
         if: steps.config.outputs.can_run == 'true'
         run: |
           terraform -chdir="terraform/stacks/production" init \
-            -backend-config="storage_account_name=${TFSTATE_STORAGE_ACCOUNT_NAME}"
+            -backend-config="storage_account_name=${TFSTATE_STORAGE_ACCOUNT_NAME}" \
+            -backend-config="use_oidc=true" \
+            -backend-config="use_azuread_auth=true"
 
       - name: Terraform apply
         if: steps.config.outputs.can_run == 'true'
