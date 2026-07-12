@@ -11,6 +11,12 @@ resource "azurerm_resource_group" "shared" {
   tags     = local.common_tags
 }
 
+resource "azurerm_resource_group" "development" {
+  name     = var.development_resource_group_name
+  location = var.location
+  tags     = local.common_tags
+}
+
 resource "azurerm_resource_group" "production" {
   name     = var.production_resource_group_name
   location = var.location
@@ -118,7 +124,7 @@ resource "azurerm_role_assignment" "github_actions_terraform_shared_rg_user_acce
 }
 
 resource "azurerm_role_assignment" "github_actions_terraform_development_rg_contributor" {
-  scope                            = local.development_resource_group_id
+  scope                            = azurerm_resource_group.development.id
   role_definition_name             = "Contributor"
   principal_id                     = azurerm_user_assigned_identity.github_actions_terraform["development"].principal_id
   principal_type                   = "ServicePrincipal"
@@ -126,7 +132,7 @@ resource "azurerm_role_assignment" "github_actions_terraform_development_rg_cont
 }
 
 resource "azurerm_role_assignment" "github_actions_terraform_development_rg_user_access_admin" {
-  scope                            = local.development_resource_group_id
+  scope                            = azurerm_resource_group.development.id
   role_definition_name             = "User Access Administrator"
   principal_id                     = azurerm_user_assigned_identity.github_actions_terraform["development"].principal_id
   principal_type                   = "ServicePrincipal"
@@ -142,7 +148,7 @@ resource "azurerm_role_assignment" "github_actions_terraform_development_acr_use
 }
 
 resource "azurerm_role_assignment" "github_actions_terraform_production_rg_contributor" {
-  scope                            = local.production_resource_group_id
+  scope                            = azurerm_resource_group.production.id
   role_definition_name             = "Contributor"
   principal_id                     = azurerm_user_assigned_identity.github_actions_terraform["production"].principal_id
   principal_type                   = "ServicePrincipal"
@@ -150,7 +156,7 @@ resource "azurerm_role_assignment" "github_actions_terraform_production_rg_contr
 }
 
 resource "azurerm_role_assignment" "github_actions_terraform_production_rg_user_access_admin" {
-  scope                            = local.production_resource_group_id
+  scope                            = azurerm_resource_group.production.id
   role_definition_name             = "User Access Administrator"
   principal_id                     = azurerm_user_assigned_identity.github_actions_terraform["production"].principal_id
   principal_type                   = "ServicePrincipal"

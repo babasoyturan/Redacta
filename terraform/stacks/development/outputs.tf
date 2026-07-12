@@ -1,5 +1,5 @@
 output "resource_group_name" {
-  value = azurerm_resource_group.development.name
+  value = data.azurerm_resource_group.development.name
 }
 output "virtual_network_id" {
   description = "Development VNet resource ID."
