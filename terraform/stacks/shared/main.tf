@@ -11,6 +11,12 @@ resource "azurerm_resource_group" "shared" {
   tags     = local.common_tags
 }
 
+resource "azurerm_resource_group" "production" {
+  name     = var.production_resource_group_name
+  location = var.location
+  tags     = local.common_tags
+}
+
 resource "azurerm_container_registry" "shared" {
   name                          = var.acr_name
   resource_group_name           = azurerm_resource_group.shared.name
