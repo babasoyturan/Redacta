@@ -60,7 +60,7 @@ SQL_ADMIN_PASSWORD_PRODUCTION
 SONAR_TOKEN
 ```
 
-`SONAR_TOKEN` and `SONAR_ORGANIZATION` are optional for execution. If they are missing, SonarCloud analysis is skipped. The workflow is intentionally non-blocking for Sonar quality gate while the application code is still being improved.
+`SONAR_TOKEN` and `SONAR_ORGANIZATION` are required for backend and frontend quality jobs. The scanner must run successfully, but `sonar.qualitygate.wait=false` keeps the quality gate non-blocking while the application code is still being improved.
 
 ## Infrastructure Flow
 
@@ -136,6 +136,7 @@ Install Argo CD if it is not installed:
 ```powershell
 kubectl create namespace argocd
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+kubectl apply --server-side -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/crds/applicationset-crd.yaml
 kubectl get pods -n argocd
 ```
 

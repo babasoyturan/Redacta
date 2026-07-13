@@ -110,9 +110,13 @@ jobs:
       - name: Production build validation
         run: npm run build
 
+      - name: Require SonarQube Cloud configuration
+        if: env.SONAR_TOKEN == '' || env.SONAR_ORGANIZATION == ''
+        run: |
+          echo "::error::Configure SONAR_TOKEN secret and SONAR_ORGANIZATION variable to run frontend SonarQube Cloud analysis."
+          exit 1
+
       - name: SonarQube Cloud analysis
-        if: env.SONAR_TOKEN != '' && env.SONAR_ORGANIZATION != ''
-        continue-on-error: true
         uses: SonarSource/sonarqube-scan-action@v5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -121,11 +125,11 @@ jobs:
           args: >
             -Dsonar.projectKey=redacta-frontend
             -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
+            -Dsonar.sources=src
+            -Dsonar.tests=src
+            -Dsonar.test.inclusions=src/**/*.test.*,src/**/*.spec.*
+            -Dsonar.exclusions=dist/**,node_modules/**,coverage/**,src/**/*.test.*,src/**/*.spec.*
             -Dsonar.qualitygate.wait=false
-
-      - name: Skip SonarQube Cloud analysis
-        if: env.SONAR_TOKEN == '' || env.SONAR_ORGANIZATION == ''
-        run: echo "SonarQube Cloud is skipped because SONAR_TOKEN or SONAR_ORGANIZATION is not configured."
 
       - name: Trivy filesystem secret scan
         uses: aquasecurity/trivy-action@v0.36.0
