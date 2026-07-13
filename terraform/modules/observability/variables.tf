@@ -31,6 +31,12 @@ variable "grafana_major_version" {
   default     = 12
 }
 
+variable "grafana_admin_object_ids" {
+  type        = set(string)
+  description = "Azure AD object IDs that should have Grafana Admin access to the Managed Grafana instance."
+  default     = []
+}
+
 variable "tags" {
   type        = map(string)
   description = "Tags applied to observability resources."

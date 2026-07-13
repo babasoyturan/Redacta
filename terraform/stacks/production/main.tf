@@ -45,10 +45,11 @@ module "application_gateway" {
 module "observability" {
   source = "../../modules/observability"
 
-  name_prefix         = var.name_prefix
-  location            = data.azurerm_resource_group.production.location
-  resource_group_name = data.azurerm_resource_group.production.name
-  tags                = local.common_tags
+  name_prefix              = var.name_prefix
+  location                 = data.azurerm_resource_group.production.location
+  resource_group_name      = data.azurerm_resource_group.production.name
+  grafana_admin_object_ids = local.platform_admin_object_ids
+  tags                     = local.common_tags
 }
 
 module "key_vault" {

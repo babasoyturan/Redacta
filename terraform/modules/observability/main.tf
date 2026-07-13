@@ -41,3 +41,11 @@ resource "azurerm_role_assignment" "grafana_monitor_reader" {
   role_definition_name = "Monitoring Reader"
   principal_id         = azurerm_dashboard_grafana.this.identity[0].principal_id
 }
+
+resource "azurerm_role_assignment" "grafana_admins" {
+  for_each = var.grafana_admin_object_ids
+
+  scope                = azurerm_dashboard_grafana.this.id
+  role_definition_name = "Grafana Admin"
+  principal_id         = each.value
+}
