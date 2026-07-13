@@ -235,26 +235,26 @@ jobs:
     if: needs.detect.outputs.backend_any == 'true'
     env:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      SONAR_ORGANIZATION: ${{ vars.SONAR_ORGANIZATION }}
+      SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Require SonarQube Cloud configuration
-        if: env.SONAR_TOKEN == '' || env.SONAR_ORGANIZATION == ''
+      - name: Require SonarQube configuration
+        if: env.SONAR_TOKEN == '' || env.SONAR_HOST_URL == ''
         run: |
-          echo "::error::Configure SONAR_TOKEN secret and SONAR_ORGANIZATION variable to run backend SonarQube Cloud analysis."
+          echo "::error::Configure SONAR_TOKEN secret and SONAR_HOST_URL variable to run backend SonarQube analysis."
           exit 1
 
-      - name: SonarQube Cloud backend analysis
+      - name: SonarQube backend analysis
         uses: SonarSource/sonarqube-scan-action@v5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
         with:
           projectBaseDir: backend
           args: >
             -Dsonar.projectKey=redacta-backend
-            -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
             -Dsonar.sources=.
             -Dsonar.tests=document-service/src/test,authentication-service/src/test,anonymization-service/src/test,genai-service/tests
             -Dsonar.exclusions=**/build/**,**/.gradle/**,**/__pycache__/**,**/.pytest_cache/**,**/src/test/**,genai-service/tests/**

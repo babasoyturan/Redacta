@@ -49,7 +49,7 @@ AKS_API_SERVER_AUTHORIZED_IP_RANGES
 PLATFORM_ADMIN_OBJECT_IDS
 DEVELOPMENT_HOSTNAME
 PRODUCTION_HOSTNAME
-SONAR_ORGANIZATION
+SONAR_HOST_URL
 ```
 
 Required GitHub secrets:
@@ -60,14 +60,14 @@ SQL_ADMIN_PASSWORD_PRODUCTION
 SONAR_TOKEN
 ```
 
-The workflows use these SonarCloud project keys:
+The workflows use these self-hosted SonarQube project keys:
 
 ```text
 redacta-backend
 redacta-frontend
 ```
 
-`SONAR_TOKEN` and `SONAR_ORGANIZATION` are required for backend and frontend quality jobs. The scanner must run successfully, but `sonar.qualitygate.wait=false` keeps the quality gate non-blocking while the application code is still being improved.
+`SONAR_TOKEN` and `SONAR_HOST_URL` are required for backend and frontend quality jobs. The scanner must run successfully, but `sonar.qualitygate.wait=false` keeps the quality gate non-blocking while the application code is still being improved.
 
 ## Infrastructure Flow
 

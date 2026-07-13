@@ -41,6 +41,27 @@ output "managed_grafana_endpoint" {
   value       = module.observability.managed_grafana_endpoint
 }
 
+output "sonarqube_url" {
+  description = "Development SonarQube URL."
+  value       = "http://${var.sonarqube_dns_record_name}.${var.sonarqube_dns_zone_name}"
+}
+
+output "sonarqube_public_ip_address" {
+  description = "Development SonarQube public IP address."
+  value       = module.sonarqube.public_ip_address
+}
+
+output "sonarqube_admin_username" {
+  description = "Development SonarQube VM admin username."
+  value       = module.sonarqube.admin_username
+}
+
+output "sonarqube_admin_private_key_pem" {
+  description = "Generated SSH private key for the development SonarQube VM admin user."
+  value       = module.sonarqube.admin_private_key_pem
+  sensitive   = true
+}
+
 output "key_vault_uri" {
   description = "Development Key Vault URI."
   value       = module.key_vault.key_vault_uri

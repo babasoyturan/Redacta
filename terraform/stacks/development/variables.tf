@@ -170,3 +170,57 @@ variable "platform_admin_object_ids" {
   description = "Stable Microsoft Entra object IDs that keep platform admin access when Terraform runs from CI."
   default     = ["0000df1f-acd9-43ee-98a3-addd4f65b744"]
 }
+
+variable "sonarqube_address_space" {
+  type        = list(string)
+  description = "Development SonarQube tooling VNet address space."
+  default     = ["10.40.0.0/24"]
+}
+
+variable "sonarqube_subnet_address_prefixes" {
+  type        = list(string)
+  description = "Development SonarQube tooling subnet CIDR ranges."
+  default     = ["10.40.0.0/28"]
+}
+
+variable "sonarqube_allowed_source_ip_ranges" {
+  type        = list(string)
+  description = "CIDR ranges allowed to access development SonarQube VM SSH."
+  default     = ["185.91.210.72/32"]
+}
+
+variable "sonarqube_dns_zone_name" {
+  type        = string
+  description = "DNS zone where the development SonarQube record is created."
+  default     = "redacta.site"
+}
+
+variable "sonarqube_dns_record_name" {
+  type        = string
+  description = "DNS record name for development SonarQube."
+  default     = "sonar"
+}
+
+variable "sonarqube_vm_size" {
+  type        = string
+  description = "VM size for development self-hosted SonarQube."
+  default     = "Standard_B2s_v2"
+}
+
+variable "sonarqube_admin_username" {
+  type        = string
+  description = "Admin username for the development SonarQube VM."
+  default     = "redactaadmin"
+}
+
+variable "sonarqube_image" {
+  type        = string
+  description = "SonarQube Docker image."
+  default     = "sonarqube:community"
+}
+
+variable "sonarqube_os_disk_size_gb" {
+  type        = number
+  description = "Development SonarQube VM OS disk size."
+  default     = 64
+}

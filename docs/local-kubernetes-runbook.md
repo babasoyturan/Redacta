@@ -259,7 +259,7 @@ Pull requests validate only. They do not push images, update GitOps state, or de
 checkout
 dependency cache
 lint / tests / build validation
-SonarQube Cloud, if configured
+SonarQube, if configured
 Trivy filesystem scan
 Helm lint/template, if chart files changed
 ```
@@ -289,7 +289,7 @@ Required repository variables:
 
 ```text
 DOCKERHUB_USERNAME
-SONAR_ORGANIZATION
+SONAR_HOST_URL
 GITOPS_APP_ID
 ```
 
@@ -301,7 +301,7 @@ SONAR_TOKEN
 GITOPS_APP_PRIVATE_KEY
 ```
 
-If SonarQube credentials are missing, Sonar analysis is explicitly skipped while the normal validation still runs. If Docker Hub or GitOps bot credentials are missing on `main`, image publishing and `versions.yaml` write-back are skipped.
+If SonarQube credentials are missing, the quality job fails explicitly so the missing CI quality configuration is visible. If Docker Hub or GitOps bot credentials are missing on `main`, image publishing and `versions.yaml` write-back are skipped.
 
 Runtime application secrets must not be added to GitHub Actions. OpenAI API keys, database passwords, Keycloak passwords, and client secrets remain Kubernetes runtime secrets.
 

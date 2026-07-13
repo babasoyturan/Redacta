@@ -52,6 +52,22 @@ module "observability" {
   tags                     = local.common_tags
 }
 
+module "sonarqube" {
+  source = "../../modules/sonarqube-vm"
+
+  name_prefix              = "redacta-sonar-swec"
+  location                 = data.azurerm_resource_group.development.location
+  resource_group_name      = data.azurerm_resource_group.development.name
+  address_space            = var.sonarqube_address_space
+  subnet_address_prefixes  = var.sonarqube_subnet_address_prefixes
+  allowed_source_ip_ranges = var.sonarqube_allowed_source_ip_ranges
+  vm_size                  = var.sonarqube_vm_size
+  admin_username           = var.sonarqube_admin_username
+  sonarqube_image          = var.sonarqube_image
+  os_disk_size_gb          = var.sonarqube_os_disk_size_gb
+  tags                     = local.common_tags
+}
+
 module "key_vault" {
   source = "../../modules/key-vault"
 
