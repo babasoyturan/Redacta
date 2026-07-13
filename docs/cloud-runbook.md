@@ -60,6 +60,13 @@ SQL_ADMIN_PASSWORD_PRODUCTION
 SONAR_TOKEN
 ```
 
+The workflows use these SonarCloud project keys:
+
+```text
+redacta-backend
+redacta-frontend
+```
+
 `SONAR_TOKEN` and `SONAR_ORGANIZATION` are required for backend and frontend quality jobs. The scanner must run successfully, but `sonar.qualitygate.wait=false` keeps the quality gate non-blocking while the application code is still being improved.
 
 ## Infrastructure Flow
