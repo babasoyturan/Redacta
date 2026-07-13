@@ -168,5 +168,5 @@ variable "aks_rbac_cluster_admin_object_ids" {
 variable "platform_admin_object_ids" {
   type        = set(string)
   description = "Stable Microsoft Entra object IDs that keep platform admin access when Terraform runs from CI."
-  default     = []
+  default     = ["0000df1f-acd9-43ee-98a3-addd4f65b744"]
 }
