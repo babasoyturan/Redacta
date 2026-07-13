@@ -36,6 +36,7 @@ module "application_gateway" {
   resource_group_name = data.azurerm_resource_group.development.name
   subnet_id           = module.network.application_gateway_subnet_id
   waf_mode            = "Detection"
+  waf_exclusions      = local.waf_document_content_exclusions
   min_capacity        = var.application_gateway_min_capacity
   max_capacity        = var.application_gateway_max_capacity
   tags                = local.common_tags

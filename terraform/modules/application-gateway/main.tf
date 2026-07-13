@@ -25,6 +25,16 @@ resource "azurerm_web_application_firewall_policy" "this" {
   }
 
   managed_rules {
+    dynamic "exclusion" {
+      for_each = var.waf_exclusions
+
+      content {
+        match_variable          = exclusion.value.match_variable
+        selector                = exclusion.value.selector
+        selector_match_operator = exclusion.value.selector_match_operator
+      }
+    }
+
     managed_rule_set {
       type    = "OWASP"
       version = "3.2"

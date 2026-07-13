@@ -28,6 +28,42 @@ variable "waf_mode" {
   }
 }
 
+variable "waf_exclusions" {
+  type = list(object({
+    match_variable          = string
+    selector                = string
+    selector_match_operator = string
+  }))
+  description = "Managed rule exclusions for request fields that carry user document content."
+  default     = []
+
+  validation {
+    condition = alltrue([
+      for exclusion in var.waf_exclusions :
+      contains([
+        "RequestArgKeys",
+        "RequestArgNames",
+        "RequestArgValues",
+        "RequestCookieKeys",
+        "RequestCookieNames",
+        "RequestCookieValues",
+        "RequestHeaderKeys",
+        "RequestHeaderNames",
+        "RequestHeaderValues"
+      ], exclusion.match_variable)
+    ])
+    error_message = "waf_exclusions match_variable must be a supported Application Gateway WAF exclusion variable."
+  }
+
+  validation {
+    condition = alltrue([
+      for exclusion in var.waf_exclusions :
+      contains(["Contains", "EndsWith", "Equals", "EqualsAny", "StartsWith"], exclusion.selector_match_operator)
+    ])
+    error_message = "waf_exclusions selector_match_operator must be Contains, EndsWith, Equals, EqualsAny, or StartsWith."
+  }
+}
+
 variable "min_capacity" {
   type        = number
   description = "Minimum autoscale capacity for Application Gateway."
