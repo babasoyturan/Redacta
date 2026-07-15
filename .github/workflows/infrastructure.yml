@@ -208,6 +208,19 @@ jobs:
             exit 0
           fi
 
+          if [ "${{ matrix.stack }}" != "shared" ]; then
+            classes=0
+            [[ "$TF_VAR_sql_administrator_login_password" =~ [A-Z] ]] && classes=$((classes + 1))
+            [[ "$TF_VAR_sql_administrator_login_password" =~ [a-z] ]] && classes=$((classes + 1))
+            [[ "$TF_VAR_sql_administrator_login_password" =~ [0-9] ]] && classes=$((classes + 1))
+            [[ "$TF_VAR_sql_administrator_login_password" =~ [^A-Za-z0-9] ]] && classes=$((classes + 1))
+
+            if [ "${#TF_VAR_sql_administrator_login_password}" -lt 12 ] || [ "$classes" -lt 3 ]; then
+              echo "::error::SQL administrator password must be at least 12 characters and include at least 3 character classes."
+              exit 1
+            fi
+          fi
+
           echo "client_id=$client_id" >> "$GITHUB_OUTPUT"
           echo "can_run=true" >> "$GITHUB_OUTPUT"
 
@@ -367,6 +380,17 @@ jobs:
             exit 0
           fi
 
+          classes=0
+          [[ "$TF_VAR_sql_administrator_login_password" =~ [A-Z] ]] && classes=$((classes + 1))
+          [[ "$TF_VAR_sql_administrator_login_password" =~ [a-z] ]] && classes=$((classes + 1))
+          [[ "$TF_VAR_sql_administrator_login_password" =~ [0-9] ]] && classes=$((classes + 1))
+          [[ "$TF_VAR_sql_administrator_login_password" =~ [^A-Za-z0-9] ]] && classes=$((classes + 1))
+
+          if [ "${#TF_VAR_sql_administrator_login_password}" -lt 12 ] || [ "$classes" -lt 3 ]; then
+            echo "::error::SQL administrator password must be at least 12 characters and include at least 3 character classes."
+            exit 1
+          fi
+
           echo "can_run=true" >> "$GITHUB_OUTPUT"
 
       - name: Azure login
@@ -481,6 +505,17 @@ jobs:
             echo "::notice::Production apply skipped because required Azure or Terraform variables are not configured."
             echo "can_run=false" >> "$GITHUB_OUTPUT"
             exit 0
+          fi
+
+          classes=0
+          [[ "$TF_VAR_sql_administrator_login_password" =~ [A-Z] ]] && classes=$((classes + 1))
+          [[ "$TF_VAR_sql_administrator_login_password" =~ [a-z] ]] && classes=$((classes + 1))
+          [[ "$TF_VAR_sql_administrator_login_password" =~ [0-9] ]] && classes=$((classes + 1))
+          [[ "$TF_VAR_sql_administrator_login_password" =~ [^A-Za-z0-9] ]] && classes=$((classes + 1))
+
+          if [ "${#TF_VAR_sql_administrator_login_password}" -lt 12 ] || [ "$classes" -lt 3 ]; then
+            echo "::error::SQL administrator password must be at least 12 characters and include at least 3 character classes."
+            exit 1
           fi
 
           echo "can_run=true" >> "$GITHUB_OUTPUT"
