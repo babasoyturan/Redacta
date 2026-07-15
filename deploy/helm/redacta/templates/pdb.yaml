@@ -1,0 +1,27 @@
+{{- if .Values.podDisruptionBudget.enabled }}
+{{- $components := list
+  (dict "key" "frontend" "label" "frontend" "enabled" .Values.podDisruptionBudget.components.frontend)
+  (dict "key" "documentService" "label" "document-service" "enabled" .Values.podDisruptionBudget.components.documentService)
+  (dict "key" "authenticationService" "label" "authentication-service" "enabled" .Values.podDisruptionBudget.components.authenticationService)
+  (dict "key" "anonymizationService" "label" "anonymization-service" "enabled" .Values.podDisruptionBudget.components.anonymizationService)
+  (dict "key" "genaiService" "label" "genai-service" "enabled" .Values.podDisruptionBudget.components.genaiService)
+-}}
+{{- range $component := $components }}
+{{- if $component.enabled }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "redacta.fullname" $ }}-{{ $component.label }}-pdb
+  labels:
+    {{- include "redacta.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $component.label }}
+spec:
+  minAvailable: {{ $.Values.podDisruptionBudget.minAvailable }}
+  selector:
+    matchLabels:
+      {{- include "redacta.selectorLabels" $ | nindent 6 }}
+      app.kubernetes.io/component: {{ $component.label }}
+{{- end }}
+{{- end }}
+{{- end }}

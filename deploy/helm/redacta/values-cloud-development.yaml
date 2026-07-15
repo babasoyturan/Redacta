@@ -125,6 +125,12 @@ certManager:
 autoscaling:
   enabled: false
 
+networkPolicy:
+  enabled: true
+  ingress:
+    appGatewayCidrs:
+      - 10.20.16.0/24
+
 monitoring:
   serviceMonitor:
     enabled: true

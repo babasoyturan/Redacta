@@ -24,6 +24,7 @@ spec:
       {{- if or .Values.serviceAccount.create .Values.serviceAccount.name (index .Values.serviceAccount.components "documentService") }}
       serviceAccountName: {{ include "redacta.componentServiceAccountName" (dict "root" . "component" "documentService") }}
       {{- end }}
+      {{- include "redacta.topologySpreadConstraints" (dict "root" . "component" "document-service") | nindent 6 }}
       containers:
         - name: document-service
           image: "{{ .Values.documentService.image.repository }}:{{ .Values.documentService.image.tag }}"

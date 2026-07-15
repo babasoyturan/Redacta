@@ -28,6 +28,7 @@ spec:
       {{- if or .Values.serviceAccount.create .Values.serviceAccount.name (index .Values.serviceAccount.components "genaiService") }}
       serviceAccountName: {{ include "redacta.componentServiceAccountName" (dict "root" . "component" "genaiService") }}
       {{- end }}
+      {{- include "redacta.topologySpreadConstraints" (dict "root" . "component" "genai-service") | nindent 6 }}
       containers:
         - name: genai-service
           image: "{{ .Values.genaiService.image.repository }}:{{ .Values.genaiService.image.tag }}"

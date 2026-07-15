@@ -20,6 +20,7 @@ spec:
         {{- include "redacta.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: frontend
     spec:
+      {{- include "redacta.topologySpreadConstraints" (dict "root" . "component" "frontend") | nindent 6 }}
       containers:
         - name: frontend
           image: "{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}"

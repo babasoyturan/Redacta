@@ -24,6 +24,7 @@ spec:
       {{- if or .Values.serviceAccount.create .Values.serviceAccount.name (index .Values.serviceAccount.components "anonymizationService") }}
       serviceAccountName: {{ include "redacta.componentServiceAccountName" (dict "root" . "component" "anonymizationService") }}
       {{- end }}
+      {{- include "redacta.topologySpreadConstraints" (dict "root" . "component" "anonymization-service") | nindent 6 }}
       containers:
         - name: anonymization-service
           image: "{{ .Values.anonymizationService.image.repository }}:{{ .Values.anonymizationService.image.tag }}"

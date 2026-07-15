@@ -114,6 +114,27 @@ autoscaling:
     anonymizationService: true
     genaiService: true
 
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1
+  components:
+    frontend: true
+    documentService: true
+    authenticationService: true
+    anonymizationService: true
+    genaiService: true
+
+topologySpread:
+  enabled: false
+  maxSkew: 1
+  topologyKey: kubernetes.io/hostname
+  whenUnsatisfiable: ScheduleAnyway
+
+networkPolicy:
+  enabled: false
+  ingress:
+    appGatewayCidrs: []
+
 monitoring:
   serviceMonitor:
     enabled: false

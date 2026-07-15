@@ -152,3 +152,16 @@ strategy:
 {{- toYaml $strategy | nindent 2 }}
 {{- end }}
 {{- end -}}
+
+{{- define "redacta.topologySpreadConstraints" -}}
+{{- if .root.Values.topologySpread.enabled }}
+topologySpreadConstraints:
+  - maxSkew: {{ .root.Values.topologySpread.maxSkew }}
+    topologyKey: {{ .root.Values.topologySpread.topologyKey | quote }}
+    whenUnsatisfiable: {{ .root.Values.topologySpread.whenUnsatisfiable }}
+    labelSelector:
+      matchLabels:
+        {{- include "redacta.selectorLabels" .root | nindent 8 }}
+        app.kubernetes.io/component: {{ .component }}
+{{- end }}
+{{- end -}}

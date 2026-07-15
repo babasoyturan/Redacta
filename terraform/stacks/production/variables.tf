@@ -120,7 +120,7 @@ variable "system_node_max_count" {
 variable "user_node_count" {
   type        = number
   description = "Production user node initial count."
-  default     = 1
+  default     = 2
 }
 
 variable "user_node_vm_size" {
@@ -132,13 +132,13 @@ variable "user_node_vm_size" {
 variable "user_node_min_count" {
   type        = number
   description = "Production user node minimum count."
-  default     = 1
+  default     = 2
 }
 
 variable "user_node_max_count" {
   type        = number
   description = "Production user node maximum count."
-  default     = 1
+  default     = 3
 }
 
 variable "storage_account_name" {

@@ -1,0 +1,40 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: redacta-slo-alerts
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: redacta
+    app.kubernetes.io/part-of: redacta
+spec:
+  groups:
+    - name: redacta.slo
+      rules:
+        - alert: RedactaHighBackend5xxRate
+          expr: sum(rate(http_server_requests_seconds_count{namespace="redacta",status=~"5.."}[5m])) > 0.05
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: Redacta backend 5xx rate is above threshold.
+        - alert: RedactaHighBackendP95Latency
+          expr: histogram_quantile(0.95, sum by (le) (rate(http_server_requests_seconds_bucket{namespace="redacta"}[5m]))) > 0.3
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: Redacta backend p95 latency is above 300ms.
+        - alert: RedactaPodCrashLooping
+          expr: sum by (pod) (increase(kube_pod_container_status_restarts_total{namespace="redacta"}[10m])) > 3
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: A Redacta pod is restarting repeatedly.
+        - alert: RedactaUnschedulablePods
+          expr: sum(kube_pod_status_unschedulable{namespace="redacta"}) > 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: Redacta has unschedulable pods.

@@ -231,7 +231,16 @@ jobs:
         if: steps.identity.outputs.can_run == 'true'
         env:
           ARM_CLIENT_ID: ${{ steps.identity.outputs.client_id }}
-        run: terraform -chdir="terraform/stacks/${{ matrix.stack }}" plan -no-color
+        run: |
+          set -o pipefail
+          terraform -chdir="terraform/stacks/${{ matrix.stack }}" plan -no-color | tee "terraform-plan-${{ matrix.stack }}.txt"
+
+      - name: Upload Terraform plan artifact
+        if: steps.identity.outputs.can_run == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan-${{ matrix.stack }}
+          path: terraform-plan-${{ matrix.stack }}.txt
 
   apply-development-shared:
     name: Apply shared infrastructure for development line
