@@ -156,3 +156,27 @@ module "workload_identity" {
   workload_identities  = local.workload_identities
   tags                 = local.common_tags
 }
+
+resource "azurerm_user_assigned_identity" "kyverno_acr_pull" {
+  name                = "id-${var.name_prefix}-kyverno-acr-pull"
+  location            = data.azurerm_resource_group.production.location
+  resource_group_name = data.azurerm_resource_group.production.name
+  tags                = local.common_tags
+}
+
+resource "azurerm_federated_identity_credential" "kyverno_acr_pull" {
+  name                = "fic-${var.name_prefix}-kyverno-acr-pull"
+  resource_group_name = data.azurerm_resource_group.production.name
+  parent_id           = azurerm_user_assigned_identity.kyverno_acr_pull.id
+  audience            = ["api://AzureADTokenExchange"]
+  issuer              = module.aks.oidc_issuer_url
+  subject             = "system:serviceaccount:kyverno:kyverno-admission-controller"
+}
+
+resource "azurerm_role_assignment" "kyverno_acr_pull" {
+  scope                            = data.terraform_remote_state.shared.outputs.acr_id
+  role_definition_name             = "AcrPull"
+  principal_id                     = azurerm_user_assigned_identity.kyverno_acr_pull.principal_id
+  principal_type                   = "ServicePrincipal"
+  skip_service_principal_aad_check = true
+}

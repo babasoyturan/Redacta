@@ -101,3 +101,8 @@ output "workload_identity_service_account_names" {
   description = "Development workload identity Kubernetes service accounts keyed by application component."
   value       = module.workload_identity.service_account_names
 }
+
+output "kyverno_acr_pull_client_id" {
+  description = "Development Kyverno Workload Identity client ID used for ACR signature verification."
+  value       = azurerm_user_assigned_identity.kyverno_acr_pull.client_id
+}
