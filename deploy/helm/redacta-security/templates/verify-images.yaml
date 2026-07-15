@@ -2,11 +2,11 @@
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
-  name: {{ include "redacta.fullname" . }}-verify-signed-images
+  name: {{ .Values.imageVerification.policyName | quote }}
   labels:
-    {{- include "redacta.labels" . | nindent 4 }}
+    app.kubernetes.io/name: redacta-security
+    app.kubernetes.io/part-of: redacta
 spec:
-  validationFailureAction: {{ .Values.imageVerification.validationFailureAction }}
   background: false
   rules:
     - name: verify-redacta-acr-images
@@ -16,10 +16,17 @@ spec:
               kinds:
                 - Pod
               namespaces:
-                - {{ .Release.Namespace | quote }}
+                - {{ .Values.imageVerification.namespace | quote }}
       verifyImages:
         - imageReferences:
             - "{{ .Values.imageVerification.registry }}/redacta-*"
+          failureAction: {{ .Values.imageVerification.failureAction | quote }}
+          mutateDigest: true
+          verifyDigest: true
+          required: true
+          imageRegistryCredentials:
+            providers:
+              - azure
           attestors:
             - count: 1
               entries:

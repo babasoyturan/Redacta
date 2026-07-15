@@ -10,8 +10,10 @@ The CI/CD pipeline already scans images and generates SBOMs. The remaining suppl
 
 ## Decision
 
-Backend and frontend image publish jobs sign pushed images with cosign keyless signing using GitHub OIDC. The same jobs attach CycloneDX SBOM attestations to the pushed images. A Kyverno `verifyImages` policy template is included in the Helm chart but disabled by default until Kyverno CRDs/controllers are installed in the target clusters.
+Backend and frontend image publish jobs sign pushed images with cosign keyless signing using GitHub OIDC. The same jobs attach CycloneDX SBOM attestations to the pushed images.
+
+Kyverno is installed in each AKS environment through a dedicated Argo CD Application. Redacta admission policies are deployed from the separate `deploy/helm/redacta-security` chart after Kyverno is ready. The policy uses `verifyImages` in `Enforce` mode for Redacta images from the project ACR and accepts only signatures issued by the GitHub Actions workflows for this repository.
 
 ## Consequences
 
-Images in ACR carry signatures and SBOM attestations without storing a long-lived signing private key. Admission enforcement can be enabled later by installing Kyverno and setting image verification values. The tradeoff is that full admission blocking depends on Kyverno being present in the cluster.
+Images in ACR carry signatures and SBOM attestations without storing a long-lived signing private key. Kubernetes admission blocks new Redacta pods if their images are not signed by the approved workflows. The tradeoff is that the Kyverno controller must be installed before the security policy is applied, so the runbook and GitOps manifests keep Kyverno and Redacta security policies as separate Argo CD applications.
