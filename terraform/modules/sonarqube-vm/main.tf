@@ -39,6 +39,10 @@ resource "azurerm_network_security_rule" "ssh" {
   network_security_group_name = azurerm_network_security_group.this.name
 }
 
+# Public HTTP is intentional for the short-lived capstone SonarQube endpoint.
+# SSH remains restricted to admin IP ranges; SonarQube access is protected at the application layer.
+#trivy:ignore:AVD-AZU-0047
+#trivy:ignore:AZU-0047
 resource "azurerm_network_security_rule" "http" {
   name                        = "AllowHttpPublic"
   priority                    = 110
