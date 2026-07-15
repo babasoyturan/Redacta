@@ -120,7 +120,7 @@ variable "system_node_max_count" {
 variable "user_node_count" {
   type        = number
   description = "Production user node initial count."
-  default     = 2
+  default     = 1
 }
 
 variable "user_node_vm_size" {
@@ -132,13 +132,13 @@ variable "user_node_vm_size" {
 variable "user_node_min_count" {
   type        = number
   description = "Production user node minimum count."
-  default     = 2
+  default     = 1
 }
 
 variable "user_node_max_count" {
   type        = number
   description = "Production user node maximum count."
-  default     = 3
+  default     = 2
 }
 
 variable "storage_account_name" {
@@ -168,5 +168,10 @@ variable "aks_rbac_cluster_admin_object_ids" {
 variable "platform_admin_object_ids" {
   type        = set(string)
   description = "Stable Microsoft Entra object IDs that keep platform admin access when Terraform runs from CI."
-  default     = ["0000df1f-acd9-43ee-98a3-addd4f65b744"]
+  default = [
+    "0000df1f-acd9-43ee-98a3-addd4f65b744",
+    "04e638d3-6526-40f6-8923-00450440e6dc",
+    "5475327e-ea6a-43fb-8c5b-6ff0ca8d5343",
+    "dc4471e7-b978-419e-b43d-52fca9c97bd0"
+  ]
 }

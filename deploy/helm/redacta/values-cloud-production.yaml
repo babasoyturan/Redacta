@@ -14,13 +14,13 @@ frontend:
   image:
     repository: acrredacta7t9.azurecr.io/redacta-frontend
     tag: replace-me
-  replicaCount: 3
+  replicaCount: 1
 
 documentService:
   image:
     repository: acrredacta7t9.azurecr.io/redacta-document-service
     tag: replace-me
-  replicaCount: 3
+  replicaCount: 1
   storageLocation: /mnt/redacta-documents
   persistence:
     enabled: true
@@ -38,14 +38,14 @@ authenticationService:
   image:
     repository: acrredacta7t9.azurecr.io/redacta-authentication-service
     tag: replace-me
-  replicaCount: 3
+  replicaCount: 1
   databaseUrl: jdbc:sqlserver://sql-redacta-prod-7t9.database.windows.net:1433;database=authdb;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;
 
 anonymizationService:
   image:
     repository: acrredacta7t9.azurecr.io/redacta-anonymization-service
     tag: replace-me
-  replicaCount: 3
+  replicaCount: 1
   databaseUrl: jdbc:sqlserver://sql-redacta-prod-7t9.database.windows.net:1433;database=anonymizationdb;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;
   jwtIssuerUri: http://keycloak:8080/realms/oopsops
 
@@ -53,7 +53,7 @@ genaiService:
   image:
     repository: acrredacta7t9.azurecr.io/redacta-genai-service
     tag: replace-me
-  replicaCount: 3
+  replicaCount: 1
   localFallback: false
 
 keycloak:
@@ -124,8 +124,8 @@ certManager:
 
 autoscaling:
   enabled: true
-  minReplicas: 3
-  maxReplicas: 4
+  minReplicas: 1
+  maxReplicas: 3
   targetCPUUtilizationPercentage: 70
   components:
     frontend: true
@@ -136,7 +136,7 @@ autoscaling:
 
 podDisruptionBudget:
   enabled: true
-  minAvailable: 2
+  minAvailable: 1
   components:
     frontend: true
     documentService: true

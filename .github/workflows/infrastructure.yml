@@ -8,6 +8,7 @@ on:
     paths:
       - "terraform/**"
       - "scripts/bootstrap-tfstate.ps1"
+      - "scripts/bootstrap-cloud-access.ps1"
       - "scripts/update-cloud-values.mjs"
       - ".github/workflows/infrastructure.yml"
   pull_request:
@@ -17,6 +18,7 @@ on:
     paths:
       - "terraform/**"
       - "scripts/bootstrap-tfstate.ps1"
+      - "scripts/bootstrap-cloud-access.ps1"
       - "scripts/update-cloud-values.mjs"
       - ".github/workflows/infrastructure.yml"
   workflow_dispatch:
