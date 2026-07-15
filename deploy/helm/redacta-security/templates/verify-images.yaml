@@ -38,7 +38,6 @@ spec:
                 - keyless:
                     issuer: {{ $.Values.imageVerification.issuer | quote }}
                     subject: {{ . | quote }}
-                    signatureAlgorithm: sha256
                     rekor:
                       url: {{ $.Values.imageVerification.rekorUrl | quote }}
                 {{- end }}
