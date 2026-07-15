@@ -141,8 +141,8 @@ jobs:
       TF_VAR_acr_name: ${{ vars.ACR_NAME }}
       TF_VAR_dns_zone_name: ${{ vars.DNS_ZONE_NAME }}
       TF_VAR_tfstate_storage_account_name: ${{ vars.TFSTATE_STORAGE_ACCOUNT_NAME }}
-      TF_VAR_api_server_authorized_ip_ranges: ${{ vars.AKS_API_SERVER_AUTHORIZED_IP_RANGES }}
-      TF_VAR_platform_admin_object_ids: ${{ vars.PLATFORM_ADMIN_OBJECT_IDS }}
+      TF_VAR_api_server_authorized_ip_ranges: '["185.91.210.72/32","188.253.210.100/32","188.253.216.100/32"]'
+      TF_VAR_platform_admin_object_ids: '["0000df1f-acd9-43ee-98a3-addd4f65b744","04e638d3-6526-40f6-8923-00450440e6dc","5475327e-ea6a-43fb-8c5b-6ff0ca8d5343","dc4471e7-b978-419e-b43d-52fca9c97bd0"]'
       TF_VAR_sql_administrator_login_password: ${{ matrix.stack == 'production' && secrets.SQL_ADMIN_PASSWORD_PRODUCTION || secrets.SQL_ADMIN_PASSWORD_DEVELOPMENT }}
     steps:
       - name: Skip non-selected workflow dispatch stacks
@@ -337,8 +337,8 @@ jobs:
       ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
       TF_VAR_location: ${{ vars.AZURE_LOCATION }}
       TF_VAR_tfstate_storage_account_name: ${{ vars.TFSTATE_STORAGE_ACCOUNT_NAME }}
-      TF_VAR_api_server_authorized_ip_ranges: ${{ vars.AKS_API_SERVER_AUTHORIZED_IP_RANGES }}
-      TF_VAR_platform_admin_object_ids: ${{ vars.PLATFORM_ADMIN_OBJECT_IDS }}
+      TF_VAR_api_server_authorized_ip_ranges: '["185.91.210.72/32","188.253.210.100/32","188.253.216.100/32"]'
+      TF_VAR_platform_admin_object_ids: '["0000df1f-acd9-43ee-98a3-addd4f65b744","04e638d3-6526-40f6-8923-00450440e6dc","5475327e-ea6a-43fb-8c5b-6ff0ca8d5343","dc4471e7-b978-419e-b43d-52fca9c97bd0"]'
       TF_VAR_sql_administrator_login_password: ${{ secrets.SQL_ADMIN_PASSWORD_DEVELOPMENT }}
     steps:
       - name: Checkout
@@ -453,8 +453,8 @@ jobs:
       ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
       TF_VAR_location: ${{ vars.AZURE_LOCATION }}
       TF_VAR_tfstate_storage_account_name: ${{ vars.TFSTATE_STORAGE_ACCOUNT_NAME }}
-      TF_VAR_api_server_authorized_ip_ranges: ${{ vars.AKS_API_SERVER_AUTHORIZED_IP_RANGES }}
-      TF_VAR_platform_admin_object_ids: ${{ vars.PLATFORM_ADMIN_OBJECT_IDS }}
+      TF_VAR_api_server_authorized_ip_ranges: '["185.91.210.72/32","188.253.210.100/32","188.253.216.100/32"]'
+      TF_VAR_platform_admin_object_ids: '["0000df1f-acd9-43ee-98a3-addd4f65b744","04e638d3-6526-40f6-8923-00450440e6dc","5475327e-ea6a-43fb-8c5b-6ff0ca8d5343","dc4471e7-b978-419e-b43d-52fca9c97bd0"]'
       TF_VAR_sql_administrator_login_password: ${{ secrets.SQL_ADMIN_PASSWORD_PRODUCTION }}
     steps:
       - name: Checkout

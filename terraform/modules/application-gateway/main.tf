@@ -107,11 +107,14 @@ resource "azurerm_application_gateway" "this" {
     ignore_changes = [
       backend_address_pool,
       backend_http_settings,
+      frontend_port,
       http_listener,
       probe,
       redirect_configuration,
       request_routing_rule,
       rewrite_rule_set,
+      ssl_certificate,
+      tags,
       url_path_map
     ]
   }
