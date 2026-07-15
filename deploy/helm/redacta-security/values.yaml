@@ -1,0 +1,12 @@
+imageVerification:
+  enabled: true
+  policyName: redacta-verify-signed-images
+  namespace: redacta
+  failureAction: Enforce
+  registry: acrredacta7t9.azurecr.io
+  issuer: https://token.actions.githubusercontent.com
+  subjects:
+    - https://github.com/babasoyturan/Redacta/.github/workflows/backend-ci-cd.yml@refs/heads/dev
+    - https://github.com/babasoyturan/Redacta/.github/workflows/backend-ci-cd.yml@refs/heads/main
+    - https://github.com/babasoyturan/Redacta/.github/workflows/frontend-ci-cd.yml@refs/heads/dev
+    - https://github.com/babasoyturan/Redacta/.github/workflows/frontend-ci-cd.yml@refs/heads/main

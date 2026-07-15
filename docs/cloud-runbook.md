@@ -156,6 +156,9 @@ Apply the development GitOps project and application:
 
 ```powershell
 kubectl apply -f deploy/gitops/argocd/development/project.yaml
+kubectl apply -f deploy/gitops/argocd/development/kyverno.yaml
+kubectl wait --for=condition=available deployment/kyverno-admission-controller -n kyverno --timeout=5m
+kubectl apply -f deploy/gitops/argocd/development/security.yaml
 kubectl apply -f deploy/gitops/argocd/development/application.yaml
 ```
 
@@ -163,10 +166,15 @@ Production uses:
 
 ```powershell
 kubectl apply -f deploy/gitops/argocd/production/project.yaml
+kubectl apply -f deploy/gitops/argocd/production/kyverno.yaml
+kubectl wait --for=condition=available deployment/kyverno-admission-controller -n kyverno --timeout=5m
+kubectl apply -f deploy/gitops/argocd/production/security.yaml
 kubectl apply -f deploy/gitops/argocd/production/application.yaml
 ```
 
 Only apply production GitOps manifests after production Key Vault secrets are ready.
+
+Kyverno must be installed before the Redacta security policy because the `ClusterPolicy` CRD is created by the Kyverno chart. The security policy verifies Redacta ACR images with cosign keyless signatures from the repository's GitHub Actions workflows and runs in `Enforce` mode.
 
 ## DNS and Temporary Access
 

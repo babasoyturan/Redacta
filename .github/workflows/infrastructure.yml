@@ -7,6 +7,8 @@ on:
       - main
     paths:
       - "terraform/**"
+      - "deploy/gitops/argocd/**"
+      - "deploy/helm/redacta-security/**"
       - "scripts/bootstrap-tfstate.ps1"
       - "scripts/bootstrap-cloud-access.ps1"
       - "scripts/update-cloud-values.mjs"
@@ -17,6 +19,8 @@ on:
       - main
     paths:
       - "terraform/**"
+      - "deploy/gitops/argocd/**"
+      - "deploy/helm/redacta-security/**"
       - "scripts/bootstrap-tfstate.ps1"
       - "scripts/bootstrap-cloud-access.ps1"
       - "scripts/update-cloud-values.mjs"
@@ -57,6 +61,9 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
 
       - name: Terraform format check
         run: terraform fmt -check -recursive terraform
@@ -102,6 +109,12 @@ jobs:
             --host dev.redacta.site
 
           grep -q "sql-redacta-dev-7t9.database.windows.net" /tmp/redacta-values.yaml
+
+      - name: Helm lint security chart
+        run: helm lint deploy/helm/redacta-security
+
+      - name: Helm template security chart
+        run: helm template redacta-security deploy/helm/redacta-security
 
       - name: Trivy Terraform IaC scan
         uses: aquasecurity/trivy-action@v0.36.0

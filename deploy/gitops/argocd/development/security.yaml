@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: redacta-security-development
+  namespace: argocd
+spec:
+  project: redacta-development
+  source:
+    repoURL: git@github.com:babasoyturan/Redacta.git
+    targetRevision: dev
+    path: deploy/helm/redacta-security
+    helm:
+      releaseName: redacta-security
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kyverno
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
