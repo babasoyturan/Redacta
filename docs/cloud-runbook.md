@@ -269,6 +269,36 @@ Recommended application smoke tests:
 - Run one minimal GenAI summary request
 - Upload a small PDF manually from the browser and verify anonymization/summarization
 
+## Managed Grafana Dashboards
+
+Terraform creates Azure Managed Grafana and connects it to the Azure Monitor workspace used by AKS managed Prometheus.
+
+The project dashboard definitions are stored in:
+
+```text
+deploy/observability/grafana/
+```
+
+Import or refresh the dashboards after Managed Grafana exists:
+
+```powershell
+.\scripts\import-grafana-dashboards.ps1 -Environment all
+```
+
+The script imports these dashboards into both development and production:
+
+- `Redacta Overview`
+- `Redacta Application SLO`
+- `Redacta Kubernetes Capacity And Scaling`
+- `Redacta Security And Delivery Controls`
+
+Get the Managed Grafana URLs:
+
+```powershell
+az grafana show -g rg-redacta-development -n graf-redacta-dev-swec --query properties.endpoint -o tsv
+az grafana show -g rg-redacta-production -n graf-redacta-prod-swec --query properties.endpoint -o tsv
+```
+
 ## Cost Control
 
 No cost-control workflow is stored in the repository.
