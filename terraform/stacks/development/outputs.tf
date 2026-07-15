@@ -43,7 +43,7 @@ output "managed_grafana_endpoint" {
 
 output "sonarqube_url" {
   description = "Development SonarQube URL."
-  value       = "http://${var.sonarqube_dns_record_name}.${var.sonarqube_dns_zone_name}"
+  value       = module.sonarqube.url
 }
 
 output "sonarqube_public_ip_address" {

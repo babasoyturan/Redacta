@@ -43,9 +43,14 @@ variable "sonarqube_image" {
   description = "SonarQube Docker image to run."
 }
 
+variable "sonarqube_hostname" {
+  type        = string
+  description = "Public hostname used for SonarQube HTTPS."
+}
+
 variable "public_http_source_address_prefix" {
   type        = string
-  description = "Source address prefix allowed to access the public SonarQube HTTP endpoint."
+  description = "Source address prefix allowed to access the public SonarQube web endpoint."
   default     = "*"
 }
 

@@ -5,7 +5,7 @@ output "public_ip_address" {
 
 output "url" {
   description = "SonarQube URL."
-  value       = "http://${azurerm_public_ip.this.ip_address}"
+  value       = "https://${var.sonarqube_hostname}"
 }
 
 output "admin_username" {

@@ -64,6 +64,7 @@ module "sonarqube" {
   vm_size                  = var.sonarqube_vm_size
   admin_username           = var.sonarqube_admin_username
   sonarqube_image          = var.sonarqube_image
+  sonarqube_hostname       = "${var.sonarqube_dns_record_name}.${var.sonarqube_dns_zone_name}"
   os_disk_size_gb          = var.sonarqube_os_disk_size_gb
   tags                     = local.common_tags
 }

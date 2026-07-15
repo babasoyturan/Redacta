@@ -39,7 +39,7 @@ resource "azurerm_network_security_rule" "ssh" {
   network_security_group_name = azurerm_network_security_group.this.name
 }
 
-# Public HTTP is intentional for the short-lived capstone SonarQube endpoint.
+# Public web access is intentional for the short-lived capstone SonarQube endpoint.
 # SSH remains restricted to admin IP ranges; SonarQube access is protected at the application layer.
 #trivy:ignore:AVD-AZU-0047
 #trivy:ignore:AZU-0047
@@ -50,7 +50,7 @@ resource "azurerm_network_security_rule" "http" {
   access                      = "Allow"
   protocol                    = "Tcp"
   source_port_range           = "*"
-  destination_port_range      = "80"
+  destination_port_ranges     = ["80", "443"]
   source_address_prefix       = var.public_http_source_address_prefix
   destination_address_prefix  = "*"
   resource_group_name         = var.resource_group_name
@@ -92,6 +92,8 @@ locals {
     packages:
       - docker.io
       - nginx
+      - certbot
+      - python3-certbot-nginx
     write_files:
       - path: /etc/sysctl.d/99-sonarqube.conf
         owner: root:root
@@ -126,7 +128,7 @@ locals {
           server {
               listen 80 default_server;
               listen [::]:80 default_server;
-              server_name _;
+              server_name ${var.sonarqube_hostname};
 
               client_max_body_size 64m;
 
@@ -144,6 +146,13 @@ locals {
           ln -sf /etc/nginx/sites-available/sonarqube /etc/nginx/sites-enabled/sonarqube
           nginx -t
           systemctl reload nginx
+          systemctl enable --now certbot.timer || true
+          certbot --nginx \
+            -d ${var.sonarqube_hostname} \
+            --non-interactive \
+            --agree-tos \
+            --register-unsafely-without-email \
+            --redirect || echo "WARNING: SonarQube HTTPS certificate was not issued. Verify DNS points to this VM public IP and rerun certbot."
     runcmd:
       - /usr/local/bin/start-sonarqube.sh
   CLOUD_INIT
