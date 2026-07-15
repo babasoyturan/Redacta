@@ -55,7 +55,7 @@ variable "private_endpoint_subnet_address_prefixes" {
 variable "application_gateway_min_capacity" {
   type        = number
   description = "Production Application Gateway minimum autoscale capacity."
-  default     = 0
+  default     = 1
 }
 
 variable "application_gateway_max_capacity" {
