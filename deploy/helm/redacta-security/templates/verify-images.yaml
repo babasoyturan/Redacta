@@ -34,5 +34,6 @@ spec:
                 - keyless:
                     issuer: {{ $.Values.imageVerification.issuer | quote }}
                     subject: {{ . | quote }}
+                    rekor: {}
                 {{- end }}
 {{- end }}
