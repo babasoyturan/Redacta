@@ -75,11 +75,11 @@ serviceAccount:
 workloadIdentity:
   enabled: true
   clientIds:
-    documentService: 46fc16fd-c06f-4249-bd40-08b8220f649c
-    authenticationService: d665d83e-1ebe-4b71-9b07-2234c735e93a
-    anonymizationService: c2986550-ac6a-4903-8d5e-5d2e2c7f85ac
-    genaiService: 61a282b7-6870-4fa1-a847-f5acd8e3365d
-    keycloak: 52195fb2-7e6a-4de0-bdb1-07cdd6500305
+    documentService: d8cd43be-9601-4250-8746-e2ba7acc9660
+    authenticationService: 1699f564-f74a-4903-87f0-bb97ac7de54e
+    anonymizationService: 4955d84e-2970-4682-ae5c-fc2bc4f7fccb
+    genaiService: 88ada5ed-36df-4a4b-a450-80fe15422218
+    keycloak: 51a35318-35a4-44ab-8c59-14d1baf3a188
 
 keyVault:
   csi:
@@ -124,12 +124,6 @@ certManager:
 
 autoscaling:
   enabled: false
-
-networkPolicy:
-  enabled: true
-  ingress:
-    appGatewayCidrs:
-      - 10.20.16.0/24
 
 monitoring:
   serviceMonitor:
