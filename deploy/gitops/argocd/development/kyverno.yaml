@@ -15,11 +15,11 @@ spec:
         admissionController:
           replicas: 1
         backgroundController:
-          replicas: 1
+          enabled: false
         cleanupController:
-          replicas: 1
+          enabled: false
         reportsController:
-          replicas: 1
+          enabled: false
   destination:
     server: https://kubernetes.default.svc
     namespace: kyverno
