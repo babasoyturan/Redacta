@@ -23,12 +23,12 @@
     {
       "id": 1,
       "type": "stat",
-      "title": "Ready Application Pods",
+      "title": "Running Application Pods",
       "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(kube_pod_status_ready{namespace=\"$namespace\",condition=\"true\"})"
+          "expr": "sum(kube_pod_status_phase{namespace=\"$namespace\",phase=\"Running\"})"
         }
       ]
     },
@@ -138,17 +138,17 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "kube_horizontalpodautoscaler_status_current_replicas{namespace=\"$namespace\"}",
+          "expr": "kube_horizontalpodautoscaler_status_current_replicas{namespace=\"$namespace\"} or vector(0)",
           "legendFormat": "{{horizontalpodautoscaler}} current"
         },
         {
           "refId": "B",
-          "expr": "kube_horizontalpodautoscaler_spec_min_replicas{namespace=\"$namespace\"}",
+          "expr": "kube_horizontalpodautoscaler_spec_min_replicas{namespace=\"$namespace\"} or vector(0)",
           "legendFormat": "{{horizontalpodautoscaler}} min"
         },
         {
           "refId": "C",
-          "expr": "kube_horizontalpodautoscaler_spec_max_replicas{namespace=\"$namespace\"}",
+          "expr": "kube_horizontalpodautoscaler_spec_max_replicas{namespace=\"$namespace\"} or vector(0)",
           "legendFormat": "{{horizontalpodautoscaler}} max"
         }
       ]
