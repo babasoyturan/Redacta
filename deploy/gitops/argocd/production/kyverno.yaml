@@ -14,6 +14,11 @@ spec:
       values: |
         admissionController:
           replicas: 1
+          serviceAccount:
+            annotations:
+              azure.workload.identity/client-id: fdcf04b8-daf2-4809-886a-2b8cba0cc739
+          podLabels:
+            azure.workload.identity/use: "true"
         backgroundController:
           enabled: false
         cleanupController:
