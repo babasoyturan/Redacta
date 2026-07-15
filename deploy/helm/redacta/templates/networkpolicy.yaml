@@ -2,7 +2,7 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: {{ include "redacta.fullname" . }}-app-ingress
+  name: {{ include "redacta.fullname" . }}-default-deny-ingress
   labels:
     {{- include "redacta.labels" . | nindent 4 }}
 spec:
@@ -11,14 +11,214 @@ spec:
       {{- include "redacta.selectorLabels" . | nindent 6 }}
   policyTypes:
     - Ingress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "redacta.fullname" . }}-allow-frontend-from-app-gateway
+  labels:
+    {{- include "redacta.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "redacta.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: frontend
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        {{- range .Values.networkPolicy.ingress.appGatewayCidrs }}
+        - ipBlock:
+            cidr: {{ . | quote }}
+        {{- end }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.frontend.service.port }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "redacta.fullname" . }}-allow-document-from-app-gateway
+  labels:
+    {{- include "redacta.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "redacta.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: document-service
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        {{- range .Values.networkPolicy.ingress.appGatewayCidrs }}
+        - ipBlock:
+            cidr: {{ . | quote }}
+        {{- end }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.documentService.service.port }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "redacta.fullname" . }}-allow-authentication-from-app-gateway
+  labels:
+    {{- include "redacta.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "redacta.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: authentication-service
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        {{- range .Values.networkPolicy.ingress.appGatewayCidrs }}
+        - ipBlock:
+            cidr: {{ . | quote }}
+        {{- end }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.authenticationService.service.port }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "redacta.fullname" . }}-allow-genai-from-app-gateway
+  labels:
+    {{- include "redacta.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "redacta.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: genai-service
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        {{- range .Values.networkPolicy.ingress.appGatewayCidrs }}
+        - ipBlock:
+            cidr: {{ . | quote }}
+        {{- end }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.genaiService.service.port }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "redacta.fullname" . }}-allow-anonymization
+  labels:
+    {{- include "redacta.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "redacta.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: anonymization-service
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        {{- range .Values.networkPolicy.ingress.appGatewayCidrs }}
+        - ipBlock:
+            cidr: {{ . | quote }}
+        {{- end }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.anonymizationService.service.port }}
+    - from:
+        - podSelector:
+            matchLabels:
+              {{- include "redacta.selectorLabels" . | nindent 14 }}
+              app.kubernetes.io/component: genai-service
+      ports:
+        - protocol: TCP
+          port: {{ .Values.anonymizationService.service.port }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "redacta.fullname" . }}-allow-keycloak-internal
+  labels:
+    {{- include "redacta.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "redacta.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: keycloak
+  policyTypes:
+    - Ingress
   ingress:
     - from:
         - podSelector:
             matchLabels:
               {{- include "redacta.selectorLabels" . | nindent 14 }}
-    {{- range .Values.networkPolicy.ingress.appGatewayCidrs }}
+              app.kubernetes.io/component: authentication-service
+        - podSelector:
+            matchLabels:
+              {{- include "redacta.selectorLabels" . | nindent 14 }}
+              app.kubernetes.io/component: document-service
+        - podSelector:
+            matchLabels:
+              {{- include "redacta.selectorLabels" . | nindent 14 }}
+              app.kubernetes.io/component: anonymization-service
+        - podSelector:
+            matchLabels:
+              {{- include "redacta.selectorLabels" . | nindent 14 }}
+              app.kubernetes.io/component: keycloak-bootstrap
+      ports:
+        - protocol: TCP
+          port: {{ .Values.keycloak.service.port }}
+{{- if .Values.monitoring.serviceMonitor.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "redacta.fullname" . }}-allow-azure-monitor-scrapes
+  labels:
+    {{- include "redacta.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app.kubernetes.io/name
+        operator: In
+        values:
+          - {{ include "redacta.name" . | quote }}
+      - key: app.kubernetes.io/instance
+        operator: In
+        values:
+          - {{ .Release.Name | quote }}
+      - key: app.kubernetes.io/component
+        operator: In
+        values:
+          - document-service
+          - authentication-service
+          - anonymization-service
+          - genai-service
+  policyTypes:
+    - Ingress
+  ingress:
     - from:
-        - ipBlock:
-            cidr: {{ . | quote }}
-    {{- end }}
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              rsName: ama-metrics
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              dsName: ama-metrics-node
+      ports:
+        - protocol: TCP
+          port: {{ .Values.documentService.service.port }}
+        - protocol: TCP
+          port: {{ .Values.authenticationService.service.port }}
+        - protocol: TCP
+          port: {{ .Values.anonymizationService.service.port }}
+        - protocol: TCP
+          port: {{ .Values.genaiService.service.port }}
+{{- end }}
 {{- end }}
