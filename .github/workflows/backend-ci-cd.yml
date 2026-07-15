@@ -240,6 +240,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Compile Java classes for SonarQube
+        shell: bash
+        working-directory: backend
+        run: ./gradlew :document-service:classes :authentication-service:classes :anonymization-service:classes
+
       - name: Check SonarQube configuration
         id: sonar-config
         shell: bash
@@ -253,7 +267,7 @@ jobs:
 
       - name: SonarQube backend analysis
         if: steps.sonar-config.outputs.enabled == 'true'
-        uses: SonarSource/sonarqube-scan-action@v5
+        uses: SonarSource/sonarqube-scan-action@v6
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
@@ -264,6 +278,7 @@ jobs:
             -Dsonar.sources=.
             -Dsonar.tests=document-service/src/test,authentication-service/src/test,anonymization-service/src/test,genai-service/tests
             -Dsonar.exclusions=**/build/**,**/.gradle/**,**/__pycache__/**,**/.pytest_cache/**,**/src/test/**,genai-service/tests/**
+            -Dsonar.java.binaries=document-service/build/classes/java/main,authentication-service/build/classes/java/main,anonymization-service/build/classes/java/main
             -Dsonar.qualitygate.wait=false
 
       - name: Trivy backend filesystem secret scan
