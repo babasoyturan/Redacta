@@ -130,6 +130,11 @@ networkPolicy:
   ingress:
     appGatewayCidrs:
       - 10.20.16.0/24
+  egress:
+    sqlCidrs:
+      - 10.20.17.0/24
+    externalHttpsCidrs:
+      - 0.0.0.0/0
 
 monitoring:
   serviceMonitor:

@@ -500,6 +500,33 @@ jobs:
             docker push "$image"
           done < backend-version-updates.txt
 
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Sign affected backend images
+        shell: bash
+        env:
+          COSIGN_EXPERIMENTAL: "true"
+        run: |
+          set -euo pipefail
+
+          while IFS='=' read -r component image; do
+            [ -n "$component" ] || continue
+            cosign sign --yes "$image"
+          done < backend-version-updates.txt
+
+      - name: Attach backend SBOM attestations
+        shell: bash
+        env:
+          COSIGN_EXPERIMENTAL: "true"
+        run: |
+          set -euo pipefail
+
+          while IFS='=' read -r component image; do
+            [ -n "$component" ] || continue
+            cosign attest --yes --type cyclonedx --predicate "sbom/${component}-${IMAGE_TAG}-sbom.cdx.json" "$image"
+          done < backend-version-updates.txt
+
       - name: Upload backend version updates
         uses: actions/upload-artifact@v4
         with:

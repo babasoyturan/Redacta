@@ -253,6 +253,19 @@ jobs:
       - name: Push exact frontend image
         run: docker push "${IMAGE_REPOSITORY}:${IMAGE_TAG}"
 
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Sign frontend image
+        env:
+          COSIGN_EXPERIMENTAL: "true"
+        run: cosign sign --yes "${IMAGE_REPOSITORY}:${IMAGE_TAG}"
+
+      - name: Attach frontend SBOM attestation
+        env:
+          COSIGN_EXPERIMENTAL: "true"
+        run: cosign attest --yes --type cyclonedx --predicate "frontend-${IMAGE_TAG}-sbom.cdx.json" "${IMAGE_REPOSITORY}:${IMAGE_TAG}"
+
   update-gitops:
     name: Update frontend GitOps version
     runs-on: ubuntu-latest

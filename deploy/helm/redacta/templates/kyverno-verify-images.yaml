@@ -1,0 +1,31 @@
+{{- if .Values.imageVerification.enabled }}
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: {{ include "redacta.fullname" . }}-verify-signed-images
+  labels:
+    {{- include "redacta.labels" . | nindent 4 }}
+spec:
+  validationFailureAction: {{ .Values.imageVerification.validationFailureAction }}
+  background: false
+  rules:
+    - name: verify-redacta-acr-images
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - {{ .Release.Namespace | quote }}
+      verifyImages:
+        - imageReferences:
+            - "{{ .Values.imageVerification.registry }}/redacta-*"
+          attestors:
+            - count: 1
+              entries:
+                {{- range .Values.imageVerification.subjects }}
+                - keyless:
+                    issuer: {{ $.Values.imageVerification.issuer | quote }}
+                    subject: {{ . | quote }}
+                {{- end }}
+{{- end }}

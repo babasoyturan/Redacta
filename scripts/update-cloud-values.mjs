@@ -122,10 +122,16 @@ function yaml(options, outputs) {
     development: "10.20.16.0/24",
     production: "10.30.16.0/24",
   };
-  const capacityControls = options.environment === "production" ? `autoscaling:
+  const sqlCidrs = {
+    development: "10.20.17.0/24",
+    production: "10.30.17.0/24",
+  };
+  const production = options.environment === "production";
+  const appReplicaCount = production ? 3 : 1;
+  const capacityControls = production ? `autoscaling:
   enabled: true
-  minReplicas: 1
-  maxReplicas: 3
+  minReplicas: 3
+  maxReplicas: 5
   targetCPUUtilizationPercentage: 70
   components:
     frontend: true
@@ -136,7 +142,7 @@ function yaml(options, outputs) {
 
 podDisruptionBudget:
   enabled: true
-  minAvailable: 1
+  minAvailable: 2
   components:
     frontend: true
     documentService: true
@@ -175,13 +181,13 @@ frontend:
   image:
     repository: ${imageRepository("frontend", acrLoginServer)}
     tag: replace-me
-  replicaCount: 1
+  replicaCount: ${appReplicaCount}
 
 documentService:
   image:
     repository: ${imageRepository("documentService", acrLoginServer)}
     tag: replace-me
-  replicaCount: 1
+  replicaCount: ${appReplicaCount}
   storageLocation: /mnt/redacta-documents
   persistence:
     enabled: true
@@ -199,14 +205,14 @@ authenticationService:
   image:
     repository: ${imageRepository("authenticationService", acrLoginServer)}
     tag: replace-me
-  replicaCount: 1
+  replicaCount: ${appReplicaCount}
   databaseUrl: ${databaseUrl(sqlFqdn, "authdb")}
 
 anonymizationService:
   image:
     repository: ${imageRepository("anonymizationService", acrLoginServer)}
     tag: replace-me
-  replicaCount: 1
+  replicaCount: ${appReplicaCount}
   databaseUrl: ${databaseUrl(sqlFqdn, "anonymizationdb")}
   jwtIssuerUri: http://keycloak:8080/realms/oopsops
 
@@ -214,7 +220,7 @@ genaiService:
   image:
     repository: ${imageRepository("genaiService", acrLoginServer)}
     tag: replace-me
-  replicaCount: 1
+  replicaCount: ${appReplicaCount}
   localFallback: false
 
 keycloak:
@@ -290,6 +296,11 @@ networkPolicy:
   ingress:
     appGatewayCidrs:
       - ${appGatewayCidrs[options.environment]}
+  egress:
+    sqlCidrs:
+      - ${sqlCidrs[options.environment]}
+    externalHttpsCidrs:
+      - 0.0.0.0/0
 
 monitoring:
   serviceMonitor:
