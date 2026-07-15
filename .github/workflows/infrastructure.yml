@@ -12,6 +12,7 @@ on:
       - "scripts/bootstrap-tfstate.ps1"
       - "scripts/bootstrap-cloud-access.ps1"
       - "scripts/update-cloud-values.mjs"
+      - "scripts/update-kyverno-application.mjs"
       - ".github/workflows/infrastructure.yml"
   pull_request:
     branches:
@@ -24,6 +25,7 @@ on:
       - "scripts/bootstrap-tfstate.ps1"
       - "scripts/bootstrap-cloud-access.ps1"
       - "scripts/update-cloud-values.mjs"
+      - "scripts/update-kyverno-application.mjs"
       - ".github/workflows/infrastructure.yml"
   workflow_dispatch:
     inputs:
@@ -88,6 +90,7 @@ jobs:
             "documents_share_name": {"value": "redacta-documents"},
             "sql_server_fqdn": {"value": "sql-redacta-dev-7t9.database.windows.net"},
             "key_vault_name": {"value": "kv-redacta-dev-swec"},
+            "kyverno_acr_pull_client_id": {"value": "66666666-6666-6666-6666-666666666666"},
             "workload_identity_client_ids": {
               "value": {
                 "documentService": "11111111-1111-1111-1111-111111111111",
@@ -109,6 +112,13 @@ jobs:
             --host dev.redacta.site
 
           grep -q "sql-redacta-dev-7t9.database.windows.net" /tmp/redacta-values.yaml
+
+          node scripts/update-kyverno-application.mjs \
+            --environment development \
+            --outputs-file /tmp/redacta-terraform-output.json \
+            --file /tmp/redacta-kyverno.yaml
+
+          grep -q "66666666-6666-6666-6666-666666666666" /tmp/redacta-kyverno.yaml
 
       - name: Helm lint security chart
         run: helm lint deploy/helm/redacta-security
@@ -444,6 +454,11 @@ jobs:
             --acr-login-server "$ACR_LOGIN_SERVER" \
             --host "$host"
 
+          node scripts/update-kyverno-application.mjs \
+            --environment development \
+            --outputs-file terraform-output.json \
+            --file deploy/gitops/argocd/development/kyverno.yaml
+
       - name: Commit development Helm values
         if: steps.config.outputs.can_run == 'true'
         shell: bash
@@ -451,21 +466,25 @@ jobs:
           set -euo pipefail
           target_branch="${GITHUB_REF_NAME}"
           values_file="deploy/helm/redacta/values-cloud-development.yaml"
+          kyverno_file="deploy/gitops/argocd/development/kyverno.yaml"
           generated_values="$(mktemp)"
+          generated_kyverno="$(mktemp)"
 
           cp "$values_file" "$generated_values"
+          cp "$kyverno_file" "$generated_kyverno"
           git fetch origin "$target_branch"
           git checkout -B "$target_branch" "origin/$target_branch"
           cp "$generated_values" "$values_file"
+          cp "$generated_kyverno" "$kyverno_file"
 
-          if git diff --quiet -- "$values_file"; then
-            echo "$values_file already matches Terraform outputs."
+          if git diff --quiet -- "$values_file" "$kyverno_file"; then
+            echo "Generated development GitOps files already match Terraform outputs."
             exit 0
           fi
 
           git config user.name "redacta-infra-bot"
           git config user.email "redacta-infra-bot[bot]@users.noreply.github.com"
-          git add "$values_file"
+          git add "$values_file" "$kyverno_file"
           git commit -m "chore(gitops): update development cloud values"
           git push origin "$target_branch"
 
@@ -571,6 +590,11 @@ jobs:
             --acr-login-server "$ACR_LOGIN_SERVER" \
             --host "$host"
 
+          node scripts/update-kyverno-application.mjs \
+            --environment production \
+            --outputs-file terraform-output.json \
+            --file deploy/gitops/argocd/production/kyverno.yaml
+
       - name: Commit production Helm values
         if: steps.config.outputs.can_run == 'true'
         shell: bash
@@ -578,20 +602,24 @@ jobs:
           set -euo pipefail
           target_branch="${GITHUB_REF_NAME}"
           values_file="deploy/helm/redacta/values-cloud-production.yaml"
+          kyverno_file="deploy/gitops/argocd/production/kyverno.yaml"
           generated_values="$(mktemp)"
+          generated_kyverno="$(mktemp)"
 
           cp "$values_file" "$generated_values"
+          cp "$kyverno_file" "$generated_kyverno"
           git fetch origin "$target_branch"
           git checkout -B "$target_branch" "origin/$target_branch"
           cp "$generated_values" "$values_file"
+          cp "$generated_kyverno" "$kyverno_file"
 
-          if git diff --quiet -- "$values_file"; then
-            echo "$values_file already matches Terraform outputs."
+          if git diff --quiet -- "$values_file" "$kyverno_file"; then
+            echo "Generated production GitOps files already match Terraform outputs."
             exit 0
           fi
 
           git config user.name "redacta-infra-bot"
           git config user.email "redacta-infra-bot[bot]@users.noreply.github.com"
-          git add "$values_file"
+          git add "$values_file" "$kyverno_file"
           git commit -m "chore(gitops): update production cloud values"
           git push origin "$target_branch"
