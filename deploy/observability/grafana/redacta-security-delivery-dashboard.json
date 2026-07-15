@@ -41,24 +41,24 @@
     {
       "id": 1,
       "type": "stat",
-      "title": "Kyverno Admission Controller Pods Ready",
+      "title": "Kyverno Metrics Targets Up",
       "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(kube_pod_status_ready{namespace=\"$kyvernoNamespace\",condition=\"true\"})"
+          "expr": "sum(up{namespace=\"$kyvernoNamespace\"})"
         }
       ]
     },
     {
       "id": 2,
       "type": "stat",
-      "title": "Argo CD Pods Ready",
+      "title": "Argo CD Metrics Targets Up",
       "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 },
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(kube_pod_status_ready{namespace=\"$argocdNamespace\",condition=\"true\"})"
+          "expr": "sum(up{namespace=\"$argocdNamespace\"})"
         }
       ]
     },
@@ -70,7 +70,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(increase(kyverno_policy_results_total{policy_name=\"redacta-verify-signed-images\",rule_result=~\"fail|error\"}[1h]))"
+          "expr": "sum(increase(kyverno_policy_results_total{policy_name=\"redacta-verify-signed-images\",rule_result=~\"fail|error\"}[1h])) or vector(0)"
         }
       ],
       "fieldConfig": {
@@ -89,12 +89,12 @@
     {
       "id": 4,
       "type": "stat",
-      "title": "Unschedulable Pods",
+      "title": "Pending Application Pods",
       "gridPos": { "h": 6, "w": 6, "x": 18, "y": 0 },
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(kube_pod_status_unschedulable{namespace=\"$namespace\"})"
+          "expr": "sum(kube_pod_status_phase{namespace=\"$namespace\",phase=\"Pending\"})"
         }
       ],
       "fieldConfig": {
@@ -135,7 +135,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (policy_name, rule_name, rule_result) (increase(kyverno_policy_results_total{policy_name=\"redacta-verify-signed-images\"}[30m]))",
+          "expr": "sum by (policy_name, rule_name, rule_result) (increase(kyverno_policy_results_total{policy_name=\"redacta-verify-signed-images\"}[30m])) or vector(0)",
           "legendFormat": "{{policy_name}} {{rule_name}} {{rule_result}}"
         }
       ]
@@ -161,7 +161,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "(certmanager_certificate_expiration_timestamp_seconds{namespace=\"$namespace\"} - time()) / 86400",
+          "expr": "(certmanager_certificate_expiration_timestamp_seconds{exported_namespace=\"$namespace\"} - time()) / 86400",
           "legendFormat": "{{name}} days remaining"
         }
       ],
@@ -182,25 +182,25 @@
     {
       "id": 9,
       "type": "timeseries",
-      "title": "Failed Pods By Reason",
+      "title": "Non-Running Pods By Phase",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (reason) (kube_pod_container_status_waiting_reason{namespace=\"$namespace\"})",
-          "legendFormat": "{{reason}}"
+          "expr": "sum by (phase) (kube_pod_status_phase{namespace=\"$namespace\",phase=~\"Pending|Failed|Unknown\"})",
+          "legendFormat": "{{phase}}"
         }
       ]
     },
     {
       "id": 10,
       "type": "timeseries",
-      "title": "Network Policy Objects",
+      "title": "Application Pods In Isolated Namespace",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
       "targets": [
         {
           "refId": "A",
-          "expr": "count by (namespace) (kube_networkpolicy_info{namespace=\"$namespace\"})",
+          "expr": "count by (namespace) (kube_pod_info{namespace=\"$namespace\"})",
           "legendFormat": "{{namespace}}"
         }
       ]

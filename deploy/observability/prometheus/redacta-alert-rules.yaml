@@ -17,13 +17,13 @@ spec:
             severity: warning
           annotations:
             summary: Redacta backend 5xx rate is above threshold.
-        - alert: RedactaHighBackendP95Latency
-          expr: histogram_quantile(0.95, sum by (le) (rate(http_server_requests_seconds_bucket{namespace="redacta"}[5m]))) > 0.3
+        - alert: RedactaHighBackendAverageLatency
+          expr: sum(rate(http_server_requests_seconds_sum{namespace="redacta"}[5m])) / clamp_min(sum(rate(http_server_requests_seconds_count{namespace="redacta"}[5m])), 0.001) > 0.3
           for: 10m
           labels:
             severity: warning
           annotations:
-            summary: Redacta backend p95 latency is above 300ms.
+            summary: Redacta backend average latency is above 300ms.
         - alert: RedactaPodCrashLooping
           expr: sum by (pod) (increase(kube_pod_container_status_restarts_total{namespace="redacta"}[10m])) > 3
           for: 5m
