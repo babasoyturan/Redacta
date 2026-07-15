@@ -1,0 +1,80 @@
+{{- if .Values.monitoring.serviceMonitor.enabled }}
+{{- if .Values.monitoring.serviceMonitor.kyverno.enabled }}
+apiVersion: {{ .Values.monitoring.serviceMonitor.apiVersion }}
+kind: ServiceMonitor
+metadata:
+  name: redacta-security-kyverno-metrics
+  labels:
+    app.kubernetes.io/name: redacta-security
+    app.kubernetes.io/part-of: redacta
+    app.kubernetes.io/component: observability
+spec:
+  namespaceSelector:
+    matchNames:
+      - {{ .Values.monitoring.serviceMonitor.kyverno.namespace }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kyverno-admission-controller
+      app.kubernetes.io/component: admission-controller
+  endpoints:
+    - port: {{ .Values.monitoring.serviceMonitor.kyverno.port }}
+      path: /metrics
+      interval: {{ .Values.monitoring.serviceMonitor.interval }}
+      scrapeTimeout: {{ .Values.monitoring.serviceMonitor.scrapeTimeout }}
+{{- end }}
+{{- if and .Values.monitoring.serviceMonitor.kyverno.enabled .Values.monitoring.serviceMonitor.argocd.enabled }}
+---
+{{- end }}
+{{- if .Values.monitoring.serviceMonitor.argocd.enabled }}
+apiVersion: {{ .Values.monitoring.serviceMonitor.apiVersion }}
+kind: ServiceMonitor
+metadata:
+  name: redacta-security-argocd-metrics
+  labels:
+    app.kubernetes.io/name: redacta-security
+    app.kubernetes.io/part-of: redacta
+    app.kubernetes.io/component: observability
+spec:
+  namespaceSelector:
+    matchNames:
+      - {{ .Values.monitoring.serviceMonitor.argocd.namespace }}
+  selector:
+    matchExpressions:
+      - key: app.kubernetes.io/name
+        operator: In
+        values:
+          - argocd-metrics
+          - argocd-server-metrics
+  endpoints:
+    - port: {{ .Values.monitoring.serviceMonitor.argocd.port }}
+      path: /metrics
+      interval: {{ .Values.monitoring.serviceMonitor.interval }}
+      scrapeTimeout: {{ .Values.monitoring.serviceMonitor.scrapeTimeout }}
+{{- end }}
+{{- if and (or .Values.monitoring.serviceMonitor.kyverno.enabled .Values.monitoring.serviceMonitor.argocd.enabled) .Values.monitoring.serviceMonitor.certManager.enabled }}
+---
+{{- end }}
+{{- if .Values.monitoring.serviceMonitor.certManager.enabled }}
+apiVersion: {{ .Values.monitoring.serviceMonitor.apiVersion }}
+kind: ServiceMonitor
+metadata:
+  name: redacta-security-cert-manager-metrics
+  labels:
+    app.kubernetes.io/name: redacta-security
+    app.kubernetes.io/part-of: redacta
+    app.kubernetes.io/component: observability
+spec:
+  namespaceSelector:
+    matchNames:
+      - {{ .Values.monitoring.serviceMonitor.certManager.namespace }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: cert-manager
+      app.kubernetes.io/component: controller
+  endpoints:
+    - port: {{ .Values.monitoring.serviceMonitor.certManager.port }}
+      path: /metrics
+      interval: {{ .Values.monitoring.serviceMonitor.interval }}
+      scrapeTimeout: {{ .Values.monitoring.serviceMonitor.scrapeTimeout }}
+{{- end }}
+{{- end }}

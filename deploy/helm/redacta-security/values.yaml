@@ -11,3 +11,22 @@ imageVerification:
     - https://github.com/babasoyturan/Redacta/.github/workflows/backend-ci-cd.yml@refs/heads/main
     - https://github.com/babasoyturan/Redacta/.github/workflows/frontend-ci-cd.yml@refs/heads/dev
     - https://github.com/babasoyturan/Redacta/.github/workflows/frontend-ci-cd.yml@refs/heads/main
+
+monitoring:
+  serviceMonitor:
+    enabled: true
+    apiVersion: azmonitoring.coreos.com/v1
+    interval: 30s
+    scrapeTimeout: 10s
+    kyverno:
+      enabled: true
+      namespace: kyverno
+      port: metrics-port
+    argocd:
+      enabled: true
+      namespace: argocd
+      port: metrics
+    certManager:
+      enabled: true
+      namespace: cert-manager
+      port: http-metrics
