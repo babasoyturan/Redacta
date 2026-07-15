@@ -20,6 +20,10 @@ spec:
                 azure.workload.identity/client-id: f35cf3a1-dc2c-4b3e-9245-22307ade9122
           podLabels:
             azure.workload.identity/use: "true"
+          container:
+            extraEnvVars:
+              - name: AZURE_CLIENT_ID
+                value: f35cf3a1-dc2c-4b3e-9245-22307ade9122
         backgroundController:
           enabled: false
         cleanupController:
