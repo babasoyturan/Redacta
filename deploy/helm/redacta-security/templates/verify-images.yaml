@@ -8,8 +8,11 @@ metadata:
     app.kubernetes.io/part-of: redacta
 spec:
   background: false
+  emitWarning: false
+  validationFailureAction: Audit
   rules:
     - name: verify-redacta-acr-images
+      skipBackgroundRequests: true
       match:
         any:
           - resources:
@@ -24,6 +27,7 @@ spec:
           mutateDigest: true
           verifyDigest: true
           required: true
+          useCache: true
           imageRegistryCredentials:
             providers:
               - azure
@@ -34,6 +38,7 @@ spec:
                 - keyless:
                     issuer: {{ $.Values.imageVerification.issuer | quote }}
                     subject: {{ . | quote }}
+                    signatureAlgorithm: sha256
                     rekor:
                       url: {{ $.Values.imageVerification.rekorUrl | quote }}
                 {{- end }}
