@@ -91,6 +91,10 @@ spec:
                 azure.workload.identity/client-id: ${clientId}
           podLabels:
             azure.workload.identity/use: "true"
+          container:
+            extraEnvVars:
+              - name: AZURE_CLIENT_ID
+                value: ${clientId}
         backgroundController:
           enabled: false
         cleanupController:
