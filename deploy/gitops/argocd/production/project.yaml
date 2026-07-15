@@ -6,7 +6,7 @@ metadata:
 spec:
   description: Production GitOps project for Redacta
   sourceRepos:
-    - git@github.com:babasoyturan/Redacta.git
+    - https://github.com/babasoyturan/Redacta.git
   destinations:
     - namespace: redacta
       server: https://kubernetes.default.svc

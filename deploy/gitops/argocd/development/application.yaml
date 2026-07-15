@@ -6,7 +6,7 @@ metadata:
 spec:
   project: redacta-development
   source:
-    repoURL: git@github.com:babasoyturan/Redacta.git
+    repoURL: https://github.com/babasoyturan/Redacta.git
     targetRevision: dev
     path: deploy/helm/redacta
     helm:
