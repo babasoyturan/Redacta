@@ -57,6 +57,11 @@ Required GitHub secrets:
 ```text
 SQL_ADMIN_PASSWORD_DEVELOPMENT
 SQL_ADMIN_PASSWORD_PRODUCTION
+```
+
+Optional GitHub secret for SonarQube scanning:
+
+```text
 SONAR_TOKEN
 ```
 
@@ -67,7 +72,7 @@ redacta-backend
 redacta-frontend
 ```
 
-`SONAR_TOKEN` and `SONAR_HOST_URL` are required for backend and frontend quality jobs. The scanner must run successfully, but `sonar.qualitygate.wait=false` keeps the quality gate non-blocking while the application code is still being improved.
+`SONAR_TOKEN` and `SONAR_HOST_URL` enable backend and frontend SonarQube analysis. If either value is missing, the workflows emit a warning and skip SonarQube for that run so deployment automation is not blocked. When both values are configured, the scanner must run successfully, but `sonar.qualitygate.wait=false` keeps the quality gate non-blocking while the application code is still being improved.
 
 ## Infrastructure Flow
 

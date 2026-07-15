@@ -301,7 +301,7 @@ SONAR_TOKEN
 GITOPS_APP_PRIVATE_KEY
 ```
 
-If SonarQube credentials are missing, the quality job fails explicitly so the missing CI quality configuration is visible. If Docker Hub or GitOps bot credentials are missing on `main`, image publishing and `versions.yaml` write-back are skipped.
+If SonarQube credentials are missing, the quality job emits a warning and skips SonarQube analysis so deployment automation is not blocked. If Docker Hub or GitOps bot credentials are missing on `main`, image publishing and `versions.yaml` write-back are skipped.
 
 Runtime application secrets must not be added to GitHub Actions. OpenAI API keys, database passwords, Keycloak passwords, and client secrets remain Kubernetes runtime secrets.
 

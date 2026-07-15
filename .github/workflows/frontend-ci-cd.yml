@@ -110,13 +110,19 @@ jobs:
       - name: Production build validation
         run: npm run build
 
-      - name: Require SonarQube configuration
-        if: env.SONAR_TOKEN == '' || env.SONAR_HOST_URL == ''
+      - name: Check SonarQube configuration
+        id: sonar-config
+        shell: bash
         run: |
-          echo "::error::Configure SONAR_TOKEN secret and SONAR_HOST_URL variable to run frontend SonarQube analysis."
-          exit 1
+          if [ -z "$SONAR_TOKEN" ] || [ -z "$SONAR_HOST_URL" ]; then
+            echo "::warning::SONAR_TOKEN secret or SONAR_HOST_URL variable is missing. Frontend SonarQube analysis will be skipped for this run."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: SonarQube analysis
+        if: steps.sonar-config.outputs.enabled == 'true'
         uses: SonarSource/sonarqube-scan-action@v5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
