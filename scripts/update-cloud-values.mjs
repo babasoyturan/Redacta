@@ -118,6 +118,38 @@ function yaml(options, outputs) {
   const clientIds = getWorkloadClientIds(outputs);
   const tenantId = options.tenantId.trim();
   const acrLoginServer = options.acrLoginServer.trim();
+  const appGatewayCidrs = {
+    development: "10.20.16.0/24",
+    production: "10.30.16.0/24",
+  };
+  const capacityControls = options.environment === "production" ? `autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 70
+  components:
+    frontend: true
+    documentService: true
+    authenticationService: true
+    anonymizationService: true
+    genaiService: true
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+  components:
+    frontend: true
+    documentService: true
+    authenticationService: true
+    anonymizationService: true
+    genaiService: true
+
+topologySpread:
+  enabled: true
+  maxSkew: 1
+  topologyKey: kubernetes.io/hostname
+  whenUnsatisfiable: ScheduleAnyway` : `autoscaling:
+  enabled: false`;
 
   if (!tenantId) {
     throw new Error("--tenant-id is required");
@@ -251,8 +283,13 @@ certManager:
     privateKeySecretName: redacta-letsencrypt-prod-account-key
     ingressClassName: azure-application-gateway
 
-autoscaling:
-  enabled: false
+${capacityControls}
+
+networkPolicy:
+  enabled: true
+  ingress:
+    appGatewayCidrs:
+      - ${appGatewayCidrs[options.environment]}
 
 monitoring:
   serviceMonitor:

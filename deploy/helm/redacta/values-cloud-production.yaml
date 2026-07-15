@@ -123,7 +123,38 @@ certManager:
     ingressClassName: azure-application-gateway
 
 autoscaling:
-  enabled: false
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 70
+  components:
+    frontend: true
+    documentService: true
+    authenticationService: true
+    anonymizationService: true
+    genaiService: true
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+  components:
+    frontend: true
+    documentService: true
+    authenticationService: true
+    anonymizationService: true
+    genaiService: true
+
+topologySpread:
+  enabled: true
+  maxSkew: 1
+  topologyKey: kubernetes.io/hostname
+  whenUnsatisfiable: ScheduleAnyway
+
+networkPolicy:
+  enabled: true
+  ingress:
+    appGatewayCidrs:
+      - 10.30.16.0/24
 
 monitoring:
   serviceMonitor:
