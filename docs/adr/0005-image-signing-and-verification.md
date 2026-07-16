@@ -14,7 +14,7 @@ Backend and frontend image publish jobs sign pushed images with cosign keyless s
 
 Kyverno is installed in each AKS environment through a dedicated Argo CD Application. Redacta admission policies are deployed from the separate `deploy/helm/redacta-security` chart after Kyverno is ready. The policy uses `verifyImages` in `Enforce` mode for Redacta images from the project ACR and accepts only signatures issued by the GitHub Actions workflows for this repository.
 
-The desired Kyverno policy explicitly sets `admission: true` and `signatureAlgorithm: sha256` because Kyverno defaults those fields in the live object. Keeping them in Git avoids unnecessary Argo CD drift. Kyverno CRD specs are ignored in the Kyverno Argo CD Application diff because Kubernetes and the Kyverno Helm chart normalize large vendor CRD schemas after apply; the CRDs are still managed by the pinned Kyverno chart version.
+The desired Kyverno policy explicitly sets `admission: true` and `signatureAlgorithm: sha256` because Kyverno defaults those fields in the live object. Keeping them in Git avoids unnecessary Argo CD drift. Kyverno CRD specs and generated CRD metadata are ignored in the Kyverno Argo CD Application diff because Kubernetes and the Kyverno Helm chart normalize large vendor CRD schemas after apply; the CRDs are still managed by the pinned Kyverno chart version.
 
 ## Consequences
 

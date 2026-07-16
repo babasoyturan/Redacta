@@ -308,7 +308,7 @@ kyverno-development          Synced Healthy
 kyverno-production           Synced Healthy
 ```
 
-Kyverno and Redacta security are separate Argo CD Applications because the Redacta security policy depends on Kyverno CRDs. Kyverno CRD specs are ignored in Argo CD diff because the live CRD schemas are normalized by Kubernetes and the Kyverno Helm chart after apply. The CRDs remain managed by the pinned Kyverno chart version.
+Kyverno and Redacta security are separate Argo CD Applications because the Redacta security policy depends on Kyverno CRDs. Kyverno CRD specs and generated CRD metadata are ignored in Argo CD diff because the live CRD schemas are normalized by Kubernetes and the Kyverno Helm chart after apply. The CRDs remain managed by the pinned Kyverno chart version.
 
 The Redacta `ClusterPolicy` desired state explicitly includes `admission: true` and `signatureAlgorithm: sha256`. These are Kyverno defaults that otherwise appear as Argo CD drift.
 
