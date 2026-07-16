@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: redacta-allow-k6-load-test-to-anonymization
+  namespace: redacta
+  labels:
+    app.kubernetes.io/name: redacta-load-test
+    app.kubernetes.io/part-of: redacta
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: redacta
+      app.kubernetes.io/instance: redacta
+      app.kubernetes.io/component: anonymization-service
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              redacta-load-test: "true"
+      ports:
+        - protocol: TCP
+          port: 8094

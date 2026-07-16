@@ -1,11 +1,13 @@
 import http from "k6/http";
 import { check } from "k6";
 
+http.setResponseCallback(http.expectedStatuses({ min: 200, max: 499 }));
+
 const baseUrl = (__ENV.BASE_URL || "https://redacta.site").replace(/\/$/, "");
 const apiPath = __ENV.API_PATH || "/api/v1/anonymization";
 const rate = Number(__ENV.RATE || 300);
 const vus = Number(__ENV.VUS || 100);
-const maxVus = Number(__ENV.MAX_VUS || 300);
+const maxVUs = Number(__ENV.MAX_VUS || 300);
 
 export const options = {
   scenarios: {
