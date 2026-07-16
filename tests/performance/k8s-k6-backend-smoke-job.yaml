@@ -1,0 +1,47 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: redacta-k6-backend-smoke
+  namespace: redacta
+  labels:
+    app.kubernetes.io/name: redacta-load-test
+    app.kubernetes.io/part-of: redacta
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      labels:
+        redacta-load-test: "true"
+        app.kubernetes.io/name: redacta-load-test
+        app.kubernetes.io/part-of: redacta
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: k6
+          image: grafana/k6:0.56.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - run
+            - /scripts/k6-backend-smoke.js
+          env:
+            - name: BASE_URL
+              value: http://redacta-anonymization-service:8094
+            - name: API_PATH
+              value: /actuator/health
+            - name: RATE
+              value: "300"
+            - name: DURATION
+              value: 60s
+            - name: VUS
+              value: "300"
+            - name: MAX_VUS
+              value: "600"
+          volumeMounts:
+            - name: k6-script
+              mountPath: /scripts
+              readOnly: true
+      volumes:
+        - name: k6-script
+          configMap:
+            name: redacta-k6-backend-smoke
