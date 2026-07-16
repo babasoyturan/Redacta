@@ -24,6 +24,7 @@ The Azure platform uses:
 - Azure Key Vault with Secrets Store CSI Driver and Workload Identity
 - Application Gateway WAF_v2 with AGIC for public ingress
 - Azure Monitor Managed Prometheus and Managed Grafana
+- Kyverno admission control with cosign image signature verification
 - Terraform for infrastructure
 - Argo CD for GitOps deployment
 - GitHub Actions for CI/CD
@@ -87,16 +88,28 @@ No destroy, recreate, start, or stop workflow is kept in the repository. Cost-co
 
 ## Current Status
 
-Development cloud is deployed and verified on AKS:
+Both cloud environments are deployed on AKS:
 
-- Argo CD application: `Synced / Healthy`
-- Ingress host: `dev.redacta.example.com`
-- Public entrypoint: Azure Application Gateway
-- Smoke checks covered frontend, authentication, protected API access, and a minimal GenAI summary request.
+```text
+development: https://dev.redacta.site
+production:  https://redacta.site
+sonarqube:   https://sonar.redacta.site
+```
 
-Production infrastructure is intentionally not deployed yet. The production resource group exists as a low-cost placeholder; production AKS, SQL, Key Vault, Application Gateway, and app deployment should be created when production secrets and final domain values are ready.
+Development is the staging environment for branch-level validation and manual smoke testing. Production runs the promoted `main` branch with higher availability settings:
+
+- Three replicas for stateless application services
+- HPA enabled with `minReplicas: 3` and `maxReplicas: 5`
+- PodDisruptionBudgets with `minAvailable: 2`
+- Azure Application Gateway TLS ingress
+- Default-deny Kubernetes NetworkPolicy with explicit service-to-service allow rules
+- Cosign image signing in CI/CD and Kyverno `verifyImages` admission policy in AKS
+- Managed Prometheus and Managed Grafana dashboards for application, cluster, security, and delivery signals
+
+Latest manual verification covered the frontend, authentication flow, document upload, AI anonymization, production ingress, SonarQube HTTPS access, and Grafana dashboard data availability.
 
 ## Runbooks
 
 - Cloud deployment and recovery: `docs/cloud-runbook.md`
 - Earlier local Kubernetes runbook: `docs/local-kubernetes-runbook.md`
+- Performance validation: `docs/performance/backend-load-test.md`
