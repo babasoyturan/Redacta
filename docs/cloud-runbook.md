@@ -9,7 +9,15 @@ Redacta uses two cloud environments:
 - Development: driven by the `dev` branch
 - Production: driven by the `main` branch
 
-Development is the active working environment. Production is created only when final secrets, domain values, and cost approval are ready.
+Development is the staging environment. Production is the promoted environment for the final presentation and is driven by the `main` branch.
+
+Public entrypoints:
+
+```text
+development: https://dev.redacta.site
+production:  https://redacta.site
+sonarqube:   https://sonar.redacta.site
+```
 
 The selected Azure region is `swedencentral`. Resource names use the `swec` suffix, which stands for Sweden Central.
 
@@ -84,7 +92,7 @@ shared stack:
   ACR
   GitHub Actions federated identities
   optional DNS zone
-  production placeholder resource group
+  shared identities and registries used by both environments
 ```
 
 Development infrastructure is applied from `dev`:
@@ -101,7 +109,7 @@ development stack:
   Azure Monitor / Managed Prometheus / Managed Grafana
 ```
 
-Production infrastructure is applied from `main` only after production secrets and domain values are ready.
+Production infrastructure is applied from `main`. Production uses the same tested image versions that were promoted from `dev` to `main`, then applies production-specific Terraform outputs and Helm values.
 
 After every successful development or production apply, the infrastructure workflow exports Terraform outputs and updates the matching Helm values file. This prevents stale SQL, Key Vault, storage, and Workload Identity placeholders.
 
@@ -176,11 +184,17 @@ Only apply production GitOps manifests after production Key Vault secrets are re
 
 Kyverno must be installed before the Redacta security policy because the `ClusterPolicy` CRD is created by the Kyverno chart. The security policy verifies Redacta ACR images with cosign keyless signatures from the repository's GitHub Actions workflows and runs in `Enforce` mode.
 
-## DNS and Temporary Access
+## DNS and Public Access
 
-Until a real domain is purchased, use a hosts-file mapping.
+The project uses the purchased domain `redacta.site`.
 
-Get the development Application Gateway IP:
+```text
+dev.redacta.site -> development Application Gateway public IP
+redacta.site     -> production Application Gateway public IP
+sonar.redacta.site -> SonarQube public IP
+```
+
+Get the Application Gateway IPs:
 
 ```powershell
 az network public-ip show `
@@ -188,28 +202,27 @@ az network public-ip show `
   --name pip-redacta-dev-swec-agw `
   --query ipAddress `
   -o tsv
+
+az network public-ip show `
+  --resource-group rg-redacta-production `
+  --name pip-redacta-prod-swec-agw `
+  --query ipAddress `
+  -o tsv
 ```
 
-Temporary hosts entry:
+If DNS propagation is still in progress during an emergency demo, a local hosts-file mapping can be used only as a fallback:
 
 ```text
-<development-app-gateway-ip> dev.redacta.example.com
+<development-app-gateway-ip> dev.redacta.site
+<production-app-gateway-ip> redacta.site
 ```
 
 Then open:
 
 ```text
-http://dev.redacta.example.com/
+https://dev.redacta.site/
+https://redacta.site/
 ```
-
-When a real domain is available, set:
-
-```text
-DEVELOPMENT_HOSTNAME=dev.<domain>
-PRODUCTION_HOSTNAME=<domain>
-```
-
-Then rerun the infrastructure workflow or update the values files through the normal branch flow.
 
 ## Verification
 
@@ -252,7 +265,8 @@ kubectl get ingress -n redacta -o wide
 Check frontend through Application Gateway:
 
 ```powershell
-curl.exe -I -H "Host: dev.redacta.example.com" http://<development-app-gateway-ip>/
+curl.exe -I https://dev.redacta.site/
+curl.exe -I https://redacta.site/
 ```
 
 Expected:
@@ -268,6 +282,59 @@ Recommended application smoke tests:
 - Call protected document and anonymization list endpoints
 - Run one minimal GenAI summary request
 - Upload a small PDF manually from the browser and verify anonymization/summarization
+
+Check SonarQube:
+
+```powershell
+curl.exe -I https://sonar.redacta.site/
+```
+
+Expected:
+
+```text
+HTTP/1.1 200 OK
+```
+
+## Argo CD and Kyverno Drift Notes
+
+Expected final application state:
+
+```text
+redacta-development          Synced Healthy
+redacta-production           Synced Healthy
+redacta-security-development Synced Healthy
+redacta-security-production  Synced Healthy
+kyverno-development          Synced Healthy
+kyverno-production           Synced Healthy
+```
+
+Kyverno and Redacta security are separate Argo CD Applications because the Redacta security policy depends on Kyverno CRDs. Kyverno CRD specs are ignored in Argo CD diff because the live CRD schemas are normalized by Kubernetes and the Kyverno Helm chart after apply. The CRDs remain managed by the pinned Kyverno chart version.
+
+The Redacta `ClusterPolicy` desired state explicitly includes `admission: true` and `signatureAlgorithm: sha256`. These are Kyverno defaults that otherwise appear as Argo CD drift.
+
+Refresh Argo CD if Git has been updated:
+
+```powershell
+kubectl annotate application kyverno-development -n argocd argocd.argoproj.io/refresh=hard --overwrite
+kubectl annotate application redacta-security-development -n argocd argocd.argoproj.io/refresh=hard --overwrite
+kubectl annotate application kyverno-production -n argocd argocd.argoproj.io/refresh=hard --overwrite
+kubectl annotate application redacta-security-production -n argocd argocd.argoproj.io/refresh=hard --overwrite
+```
+
+## Performance Validation
+
+Backend capacity proof is stored in:
+
+```text
+docs/performance/backend-load-test.md
+tests/performance/k6-backend-smoke.js
+tests/performance/k8s-k6-backend-smoke-job.yaml
+tests/performance/k8s-loadtest-networkpolicy.yaml
+```
+
+The preferred proof runs a temporary k6 job inside production AKS at 300 requests per second against the internal anonymization service health endpoint. This avoids measuring browser, internet, TLS, or Application Gateway latency when the question is backend service capacity.
+
+The load-test NetworkPolicy is temporary and must be deleted after the proof. It is not deployed by Argo CD.
 
 ## Managed Grafana Dashboards
 
@@ -322,14 +389,15 @@ Before deleting shared resources, confirm that ACR images and GitHub OIDC identi
 
 ## Production Readiness Checklist
 
-Before enabling production:
+Production readiness checklist:
 
 - `SQL_ADMIN_PASSWORD_PRODUCTION` exists in GitHub secrets
-- Production domain is selected
-- `PRODUCTION_HOSTNAME` is configured
+- `PRODUCTION_HOSTNAME=redacta.site`
 - Production Key Vault secrets are seeded
 - Production Terraform apply has completed
 - `values-cloud-production.yaml` has been updated by Terraform outputs
 - Production Argo CD project/application are applied
-- Production ingress points to the correct Application Gateway public IP
-- Smoke tests pass through the production hostname
+- Production ingress points to the production Application Gateway public IP
+- TLS certificate is issued for `redacta.site`
+- Smoke tests pass through `https://redacta.site`
+- Production replica, HPA, PDB, and NetworkPolicy settings are active
