@@ -108,6 +108,8 @@ spec:
     - group: apiextensions.k8s.io
       kind: CustomResourceDefinition
       jsonPointers:
+        - /metadata/annotations
+        - /metadata/labels
         - /spec
   syncPolicy:
     automated:
