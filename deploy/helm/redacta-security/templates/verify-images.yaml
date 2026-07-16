@@ -7,6 +7,7 @@ metadata:
     app.kubernetes.io/name: redacta-security
     app.kubernetes.io/part-of: redacta
 spec:
+  admission: true
   background: false
   emitWarning: false
   validationFailureAction: Audit
@@ -40,5 +41,6 @@ spec:
                     subject: {{ . | quote }}
                     rekor:
                       url: {{ $.Values.imageVerification.rekorUrl | quote }}
+                  signatureAlgorithm: {{ $.Values.imageVerification.signatureAlgorithm | quote }}
                 {{- end }}
 {{- end }}
